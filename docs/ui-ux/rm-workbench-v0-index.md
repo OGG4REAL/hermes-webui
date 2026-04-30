@@ -175,7 +175,7 @@ OK: resolved pending interaction pi_001 with 2 selected products
 - `MYM-26`: RM Workbench V0 Frontend Smoke Workbench
 - `MYM-27` / `1b30919c-e851-4c18-a513-f42f4980fdf5`: RM Workbench V0 Backend Mock Stream Integration
 
-`MYM-27` 已由 Multica 标记 `done`，但这不等同于 Codex 验收通过。下一步应先做 Codex audit：检查 diff、读取 issue completion comment、运行验收命令，再决定是否批准或要求修复。
+`MYM-27` 已完成并通过 Codex acceptance review。Codex 在验收中补了小修：mock stream loopback-only、中文 payload 回归测试、adapter surface data 补全、fixture 中文化，并完成浏览器 smoke。
 
 ### Issue 1: RM Workbench V0 Backend Adapter
 
@@ -275,7 +275,7 @@ npm run build
 
 ### Issue 4: RM Workbench V0 Backend Mock Stream Integration
 
-状态：`MYM-27` / `1b30919c-e851-4c18-a513-f42f4980fdf5` 已创建，Multica 状态为 `done`；待 Codex audit。
+状态：`MYM-27` / `1b30919c-e851-4c18-a513-f42f4980fdf5` 已完成，并通过 Codex acceptance review。
 
 目标：
 
@@ -332,17 +332,17 @@ npm run build
 
 ---
 
-## 6. MYM-27 Codex Audit Checklist
+## 6. MYM-27 Acceptance Record
 
-Codex audit 应确认：
+Codex acceptance comment 结论：
 
-- `GET /api/rm-workbench/mock-stream` 或等价 endpoint 的数据来自 `api.rm_workbench.adapter`，不是复制一份前端 fixture。
-- frontend 默认读取 backend mock stream；static transcript 只作为可见 fallback。
-- fallback 失败提示是中文可见状态，不是静默成功。
-- ProductFitTable confirm 继续调用 `/api/rm-workbench/pending/resolve`，并把 `resolved: 0` 当作错误。
-- smoke demo 用户可见文本和 mock 数据保持中文优先。
-- 未接入真实 Hermes chat、CopilotKit runtime、真实 RM Skill、真实客户数据、真实产品池或 Memory 自动写入。
-- 运行并记录验收命令：
+- Approved after local review plus small follow-up fixes.
+- `GET /api/rm-workbench/mock-stream` 已改成 loopback-only，符合 dev/test-only 边界。
+- Backend stream payload 已覆盖中文 demo 数据和三类 semantic surfaces。
+- Frontend 默认使用 backend mock stream，fallback 会显示中文警告和数据来源。
+- Browser smoke 已确认 footer 显示 `数据来源：后端模拟流`，并完成选择 `稳健收益组合 A` -> `确认选择` -> `选择已确认`。
+
+验收命令：
 
 ```bash
 python3 docs/ui-ux/rm-workbench-v0-spike/mock_adapter_check.py
@@ -351,9 +351,47 @@ cd frontend
 npm run build
 ```
 
+验收结果：
+
+```text
+mock_adapter_check.py -> passed with expected four OK lines
+pytest adapter/pending/routes/mock_stream -> 27 passed in 1.81s
+npm run build -> passed, vite built in 303ms
+browser smoke -> passed
+```
+
+本地人工验收命令：
+
+```bash
+HERMES_WEBUI_PORT=<port> /Users/hywl/.hermes/hermes-agent/venv/bin/python server.py
+RM_WORKBENCH_BACKEND=http://127.0.0.1:<port> npm run dev -- --host 127.0.0.1
+```
+
+残余风险：
+
+- Mock stream 仍是同步发送全部 SSE events；V0 smoke integration 可接受，未来真实 Hermes integration 需要渐进式异步 stream。
+
 ---
 
-## 7. 不要在 Backend Mock Stream Issue 做的事
+## 7. 下一步建议：真实 Hermes Chat / RM Skill 接入前的边界评估
+
+MYM-27 之后，技术链路已经从 backend adapter 到 frontend renderer 打通。下一步不要立刻扩成完整 RM 工作台，建议先做一张 planning/evaluation issue：
+
+```text
+RM Workbench V0 Real Hermes Stream Boundary Evaluation
+```
+
+目标：
+
+- 明确真实 Hermes `/api/chat/stream` 如何承载 AG-UI standard events 与 `CUSTOM a2ui.surface.messages`。
+- 明确 RM Skill structured output 在 Hermes Agent runtime 内的生成位置。
+- 明确 pending interaction resolve 如何回到 Hermes run，而不是只停在 hermes-webui backend。
+- 明确是否需要 CopilotKit frontend utilities；不做 runtime takeover。
+- 明确 Memory proposal 的只读/待确认边界，暂不做自动写入。
+
+---
+
+## 8. 不要在 Backend Mock Stream Issue 做的事
 
 Backend mock stream issue 不做：
 
@@ -373,16 +411,16 @@ Backend mock stream issue 不做：
 
 ---
 
-## 8. 推荐给 Codex Audit 新窗口的开场指令
+## 9. 推荐给下一张规划 Issue 的开场指令
 
 可以把下面这段丢给新窗口：
 
 ```text
 请在 /Users/hywl/hermes-webui 中工作。先阅读 docs/ui-ux/rm-workbench-v0-index.md。
 
-MYM-24、MYM-25、MYM-26 已完成并通过 Codex review。MYM-27 / 1b30919c-e851-4c18-a513-f42f4980fdf5 已由 Multica 标记 done，现在请做 Codex audit：
+MYM-24、MYM-25、MYM-26、MYM-27 已完成并通过 Codex review。现在请创建一张 planning/evaluation issue：
 
-RM Workbench V0 Backend Mock Stream Integration
+RM Workbench V0 Real Hermes Stream Boundary Evaluation
 
-请先 fetch issue JSON 和 comments，然后检查 /Users/hywl/hermes-webui 的 diff。重点确认 frontend smoke UI 默认从 hermes-webui 后端 dev/test-only mock stream 消费由 api.rm_workbench.adapter 生成的 AG-UI/A2UI events，ProductFitTable confirm 仍调用 /api/rm-workbench/pending/resolve。请运行文档中的验收命令。只 review，不改代码；发现问题按 severity 列出；无问题请明确批准。
+请不要直接实现真实 RM Skill 或 CopilotKit runtime。目标是把 MYM-27 的 backend mock stream 推向真实 Hermes chat/stream 前，先明确事件承载、Skill structured output 生成位置、pending interaction resolve 回流路径、Memory proposal 边界和 CopilotKit 可用边界。请产出具体实现计划、文件边界、风险和验收标准。
 ```
