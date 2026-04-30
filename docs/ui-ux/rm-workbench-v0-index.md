@@ -2,7 +2,7 @@
 
 路径：`docs/ui-ux/rm-workbench-v0-index.md`
 状态：`active / start here`
-更新时间：`2026-04-29`
+更新时间：`2026-04-30`
 目的：作为 RM Workbench V0 的唯一入口，避免后续工程 agent 被早期讨论文档绕进去。
 
 ---
@@ -26,7 +26,7 @@ Hermes Agent runtime
 
 ---
 
-## 1. 新窗口 / Multica Worker 只需要先读这三份
+## 1. 新窗口 / Multica Worker 只需要先读这些
 
 ### 1.1 技术选型边界
 
@@ -57,6 +57,16 @@ Hermes Agent runtime
 - 工程执行入口。
 - 包含文件边界、任务拆分、测试、验收标准。
 - 后续 Multica issue 应从这份文档拆。
+
+### 1.4 下一步真实 Stream 边界评估
+
+`docs/ui-ux/rm-workbench-v0-real-hermes-stream-boundary.md`
+
+用途：
+
+- 作为 `MYM-27` 之后的下一张 planning/evaluation issue 输入。
+- 明确真实 Hermes `/api/chat/stream`、RM Skill structured output、pending interaction resume、Memory proposal、CopilotKit 边界。
+- 防止下一步直接漂到完整 RM Skill 或完整工作台 UI 大实现。
 
 ---
 
@@ -389,6 +399,18 @@ RM Workbench V0 Real Hermes Stream Boundary Evaluation
 - 明确是否需要 CopilotKit frontend utilities；不做 runtime takeover。
 - 明确 Memory proposal 的只读/待确认边界，暂不做自动写入。
 
+新窗口应先读：
+
+```text
+docs/ui-ux/rm-workbench-v0-real-hermes-stream-boundary.md
+```
+
+建议产物：
+
+```text
+docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md
+```
+
 ---
 
 ## 8. 不要在 Backend Mock Stream Issue 做的事
@@ -416,11 +438,14 @@ Backend mock stream issue 不做：
 可以把下面这段丢给新窗口：
 
 ```text
-请在 /Users/hywl/hermes-webui 中工作。先阅读 docs/ui-ux/rm-workbench-v0-index.md。
+请在 /Users/hywl/hermes-webui 中工作。先阅读：
+
+- docs/ui-ux/rm-workbench-v0-index.md
+- docs/ui-ux/rm-workbench-v0-real-hermes-stream-boundary.md
 
 MYM-24、MYM-25、MYM-26、MYM-27 已完成并通过 Codex review。现在请创建一张 planning/evaluation issue：
 
 RM Workbench V0 Real Hermes Stream Boundary Evaluation
 
-请不要直接实现真实 RM Skill 或 CopilotKit runtime。目标是把 MYM-27 的 backend mock stream 推向真实 Hermes chat/stream 前，先明确事件承载、Skill structured output 生成位置、pending interaction resolve 回流路径、Memory proposal 边界和 CopilotKit 可用边界。请产出具体实现计划、文件边界、风险和验收标准。
+请不要直接实现真实 RM Skill 或 CopilotKit runtime。目标是把 MYM-27 的 backend mock stream 推向真实 Hermes chat/stream 前，先明确事件承载、Skill structured output 生成位置、pending interaction resolve 回流路径、Memory proposal 边界和 CopilotKit 可用边界。请产出 docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md，内容包括推荐架构、被拒绝方案、下一张 implementation issue 的精确文件边界、最小 contract shape、pending interaction resume 语义、测试清单、风险和验收标准。
 ```

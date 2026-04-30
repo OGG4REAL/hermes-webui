@@ -846,7 +846,124 @@ Mock stream sends all SSE events synchronously. This is acceptable for V0 smoke 
 
 ---
 
-## 9. Task 7: CopilotKit Boundary Evaluation
+## 9. Task 7: Real Hermes Stream Boundary Evaluation
+
+Status: next recommended planning/evaluation slice after `MYM-27`.
+
+This task should not implement the real integration. It should decide where the real integration belongs and produce a precise implementation plan for the next issue.
+
+Reference:
+
+- `docs/ui-ux/rm-workbench-v0-real-hermes-stream-boundary.md`
+
+**Files:**
+
+- Create: `docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md`
+
+- [ ] **Step 1: Inspect current stream and pending interaction seams**
+
+Read these files:
+
+```text
+api/routes.py
+api/streaming.py
+api/pending_interactions.py
+api/rm_workbench/adapter.py
+api/rm_workbench/contracts.py
+frontend/src/api/hermesClient.ts
+frontend/src/agui/aguiReducer.ts
+frontend/src/App.tsx
+/Users/hywl/hermes-agent/run_agent.py
+/Users/hywl/hermes-agent/skills/
+```
+
+The inspection should focus on:
+
+```text
+/api/chat/start
+/api/chat/stream
+api.streaming._run_agent_streaming
+clarify_callback
+pending interaction notify callback
+POST /api/rm-workbench/pending/resolve
+GET /api/rm-workbench/mock-stream
+```
+
+- [ ] **Step 2: Choose the real stream architecture**
+
+Compare:
+
+```text
+A. Preserve existing /api/chat/stream SSE events and add rm_workbench events carrying AG-UI payloads.
+B. Rewrite /api/chat/stream to emit AG-UI top-level events.
+C. Add a separate real /api/rm-workbench/stream route.
+```
+
+Default recommendation should be `A` unless inspection proves a concrete blocker.
+
+- [ ] **Step 3: Define the structured RM Skill output seam**
+
+The result doc must reject natural-language parsing and define where structured contracts enter the webui adapter:
+
+```text
+Hermes Agent Skill/tool structured result
+  -> api.streaming detects rm_workbench contract
+  -> api.rm_workbench.adapter maps contract
+  -> rm_workbench SSE event carries AG-UI events
+```
+
+- [ ] **Step 4: Define pending interaction resume semantics**
+
+The result doc must answer:
+
+```text
+Should resolve require interaction_id?
+Should resolve_pending resolve oldest or by id?
+Where does the running Hermes Skill/tool block?
+How does cancel_stream clear and unblock pending interactions?
+What timeout should V0 use?
+What exact payload returns to the Skill/tool?
+```
+
+- [ ] **Step 5: Define Memory proposal boundary**
+
+The result doc must keep V0 proposal-first:
+
+```text
+CUSTOM name = rm.memory_proposal.created
+MemoryDiffCard renders proposals
+No automatic writes to Hermes memory, Codex memory, or banking source of truth
+```
+
+- [ ] **Step 6: Define CopilotKit boundary**
+
+The result doc must classify CopilotKit as:
+
+```text
+use now
+reference only
+defer
+requires runtime takeover
+```
+
+The default should remain `reference only` unless there is a narrowly scoped frontend utility that does not introduce CopilotKit runtime state.
+
+- [ ] **Step 7: Write acceptance criteria for the next implementation issue**
+
+The result doc must include tests for:
+
+```text
+1. real-stream bridge emits rm_workbench SSE event when adapter receives structured contract
+2. frontend reducer can consume rm_workbench payload containing AG-UI events
+3. pending interaction resolve by interaction_id resumes waiting entry
+4. stream cancel clears pending interaction and unblocks wait
+5. no Memory write happens when memory proposals are emitted
+6. existing clarify/approval/cancel tests still pass
+```
+
+---
+
+## 10. Task 8: CopilotKit Boundary Evaluation
 
 **Files:**
 
@@ -879,7 +996,7 @@ Do not route Hermes runtime through CopilotKit runtime unless this evaluation pr
 
 ---
 
-## 10. Acceptance Checklist
+## 11. Acceptance Checklist
 
 V0 implementation is acceptable when:
 
@@ -891,12 +1008,15 @@ V0 implementation is acceptable when:
 - [ ] React renderer can display `CustomerProfileCard`, `ProductFitTable`, and `BriefExportPanel`.
 - [ ] Product selection returns structured selected product IDs.
 - [ ] Frontend smoke workbench can consume backend-generated mock AG-UI/A2UI events.
+- [ ] Real Hermes stream boundary evaluation has selected a stream architecture before implementation.
+- [ ] Pending interaction resume semantics are defined before real Skill integration.
+- [ ] Memory proposal remains proposal-first with no automatic write.
 - [ ] Existing clarify and approval tests still pass.
 - [ ] No CopilotKit runtime takeover is introduced in V0 without a separate decision.
 
 ---
 
-## 11. Verification Commands
+## 12. Verification Commands
 
 Run after backend slices:
 
