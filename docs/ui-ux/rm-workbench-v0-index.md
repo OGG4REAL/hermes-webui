@@ -173,8 +173,9 @@ OK: resolved pending interaction pi_001 with 2 selected products
 - `MYM-24`: RM Workbench V0 Backend Adapter
 - `MYM-25`: RM Workbench V0 Pending Interaction Backend
 - `MYM-26`: RM Workbench V0 Frontend Smoke Workbench
+- `MYM-27` / `1b30919c-e851-4c18-a513-f42f4980fdf5`: RM Workbench V0 Backend Mock Stream Integration
 
-下一批建议只起一个 backend mock stream issue，不要一口气把真实 Hermes Skill、完整 Hermes chat replacement、CopilotKit runtime 都塞进去。
+`MYM-27` 已由 Multica 标记 `done`，但这不等同于 Codex 验收通过。下一步应先做 Codex audit：检查 diff、读取 issue completion comment、运行验收命令，再决定是否批准或要求修复。
 
 ### Issue 1: RM Workbench V0 Backend Adapter
 
@@ -274,7 +275,7 @@ npm run build
 
 ### Issue 4: RM Workbench V0 Backend Mock Stream Integration
 
-状态：建议下一步创建。
+状态：`MYM-27` / `1b30919c-e851-4c18-a513-f42f4980fdf5` 已创建，Multica 状态为 `done`；待 Codex audit。
 
 目标：
 
@@ -305,7 +306,7 @@ Expose a backend mock AG-UI/A2UI stream generated from api.rm_workbench.adapter,
 
 ```bash
 python3 docs/ui-ux/rm-workbench-v0-spike/mock_adapter_check.py
-/Users/hywl/.hermes/hermes-agent/venv/bin/python -m pytest tests/test_rm_workbench_adapter.py tests/test_pending_interactions.py tests/test_rm_workbench_routes.py -q
+/Users/hywl/.hermes/hermes-agent/venv/bin/python -m pytest tests/test_rm_workbench_adapter.py tests/test_pending_interactions.py tests/test_rm_workbench_routes.py tests/test_rm_workbench_mock_stream.py -q
 cd frontend
 npm run build
 ```
@@ -331,7 +332,28 @@ npm run build
 
 ---
 
-## 6. 不要在下一批 Backend Mock Stream Issue 做的事
+## 6. MYM-27 Codex Audit Checklist
+
+Codex audit 应确认：
+
+- `GET /api/rm-workbench/mock-stream` 或等价 endpoint 的数据来自 `api.rm_workbench.adapter`，不是复制一份前端 fixture。
+- frontend 默认读取 backend mock stream；static transcript 只作为可见 fallback。
+- fallback 失败提示是中文可见状态，不是静默成功。
+- ProductFitTable confirm 继续调用 `/api/rm-workbench/pending/resolve`，并把 `resolved: 0` 当作错误。
+- smoke demo 用户可见文本和 mock 数据保持中文优先。
+- 未接入真实 Hermes chat、CopilotKit runtime、真实 RM Skill、真实客户数据、真实产品池或 Memory 自动写入。
+- 运行并记录验收命令：
+
+```bash
+python3 docs/ui-ux/rm-workbench-v0-spike/mock_adapter_check.py
+/Users/hywl/.hermes/hermes-agent/venv/bin/python -m pytest tests/test_rm_workbench_adapter.py tests/test_pending_interactions.py tests/test_rm_workbench_routes.py tests/test_rm_workbench_mock_stream.py -q
+cd frontend
+npm run build
+```
+
+---
+
+## 7. 不要在 Backend Mock Stream Issue 做的事
 
 Backend mock stream issue 不做：
 
@@ -351,16 +373,16 @@ Backend mock stream issue 不做：
 
 ---
 
-## 7. 推荐给新窗口的开场指令
+## 8. 推荐给 Codex Audit 新窗口的开场指令
 
 可以把下面这段丢给新窗口：
 
 ```text
 请在 /Users/hywl/hermes-webui 中工作。先阅读 docs/ui-ux/rm-workbench-v0-index.md。
 
-MYM-24、MYM-25、MYM-26 已完成并通过 Codex review。现在请按 index 中的 Issue 4 建议，用 Multica 创建下一张 issue：
+MYM-24、MYM-25、MYM-26 已完成并通过 Codex review。MYM-27 / 1b30919c-e851-4c18-a513-f42f4980fdf5 已由 Multica 标记 done，现在请做 Codex audit：
 
 RM Workbench V0 Backend Mock Stream Integration
 
-请不要接 CopilotKit runtime，不要接真实 RM Skill，不要改真实 Hermes Agent runtime，不要接真实 Hermes chat。目标是让 frontend smoke UI 不再默认读取静态 transcript，而是从 hermes-webui 后端 dev/test-only mock stream 消费由 api.rm_workbench.adapter 生成的 AG-UI/A2UI events，并继续让 ProductFitTable confirm 后调用 /api/rm-workbench/pending/resolve。
+请先 fetch issue JSON 和 comments，然后检查 /Users/hywl/hermes-webui 的 diff。重点确认 frontend smoke UI 默认从 hermes-webui 后端 dev/test-only mock stream 消费由 api.rm_workbench.adapter 生成的 AG-UI/A2UI events，ProductFitTable confirm 仍调用 /api/rm-workbench/pending/resolve。请运行文档中的验收命令。只 review，不改代码；发现问题按 severity 列出；无问题请明确批准。
 ```
