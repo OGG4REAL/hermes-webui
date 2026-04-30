@@ -1,0 +1,11 @@
+{
+  "type": "pending_interaction.resolve",
+  "run_id": "run_001",
+  "thread_id": "thread_rm_001",
+  "interaction_id": "pi_001",
+  "surface_id": "surface_product_fit_001",
+  "payload": {
+    "selected_product_ids": ["prod_001", "prod_002"],
+    "note": "Use prod_001 as defensive anchor and prod_002 as balanced allocation candidate."
+  }
+}

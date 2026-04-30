@@ -1,0 +1,121 @@
+{
+  "kind": "rm.pre_meeting_brief",
+  "version": "0.1.0",
+  "run_id": "run_001",
+  "thread_id": "thread_rm_001",
+  "skill": "pre_meeting_brief",
+  "customer": {
+    "id": "cust_001",
+    "name": "Mock Customer",
+    "risk_level": "R3",
+    "aum": 3200000,
+    "liquidity_need": "medium",
+    "investment_horizon": "12-24m"
+  },
+  "memory_references": [
+    {
+      "id": "mem_001",
+      "type": "preference",
+      "summary": "Prefers lower drawdown products after a previous volatile fund experience."
+    },
+    {
+      "id": "mem_002",
+      "type": "relationship",
+      "summary": "Usually asks for spouse alignment before confirming allocation changes."
+    }
+  ],
+  "product_candidates": [
+    {
+      "id": "prod_001",
+      "name": "Stable Income Portfolio A",
+      "asset_class": "fixed_income_plus",
+      "risk_level": "R2",
+      "fit_score": 86,
+      "reasons": [
+        "Matches lower drawdown preference",
+        "Compatible with medium liquidity need"
+      ]
+    },
+    {
+      "id": "prod_002",
+      "name": "Balanced Allocation Portfolio B",
+      "asset_class": "multi_asset",
+      "risk_level": "R3",
+      "fit_score": 81,
+      "reasons": [
+        "Matches customer risk level",
+        "Improves diversification"
+      ]
+    },
+    {
+      "id": "prod_003",
+      "name": "Cash Management Plus C",
+      "asset_class": "cash_management",
+      "risk_level": "R1",
+      "fit_score": 73,
+      "reasons": [
+        "Useful for near-term liquidity bucket",
+        "Can buffer portfolio volatility"
+      ]
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "surface_customer_001",
+      "surface": "CustomerProfileCard",
+      "props": {
+        "customer_id": "cust_001",
+        "show_memory_highlights": true
+      }
+    },
+    {
+      "id": "surface_product_fit_001",
+      "surface": "ProductFitTable",
+      "props": {
+        "candidate_source": "product_candidates",
+        "selectable": true,
+        "min_selection": 1,
+        "max_selection": 3
+      }
+    },
+    {
+      "id": "surface_export_001",
+      "surface": "BriefExportPanel",
+      "props": {
+        "formats": ["markdown", "pdf_draft"],
+        "default_format": "markdown"
+      }
+    }
+  ],
+  "pending_interactions": [
+    {
+      "id": "pi_001",
+      "action": "select_products",
+      "surface_id": "surface_product_fit_001",
+      "blocking": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "selected_product_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 3
+          }
+        },
+        "required": ["selected_product_ids"]
+      }
+    }
+  ],
+  "brief": {
+    "title": "Pre-meeting brief for Mock Customer",
+    "summary": "Focus the meeting on suitability, liquidity bucket, and spouse-aligned decision flow.",
+    "talking_points": [
+      "Start with risk comfort and previous volatility experience.",
+      "Frame product candidates as allocation roles, not isolated products.",
+      "Confirm whether spouse alignment is needed before moving forward."
+    ]
+  }
+}

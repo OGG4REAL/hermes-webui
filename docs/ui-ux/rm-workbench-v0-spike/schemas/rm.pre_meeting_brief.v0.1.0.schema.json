@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hermes.local/schemas/rm.pre_meeting_brief.v0.1.0.schema.json",
+  "title": "RM Pre-Meeting Brief Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "version",
+    "run_id",
+    "thread_id",
+    "skill",
+    "customer",
+    "memory_references",
+    "product_candidates",
+    "surfaces",
+    "pending_interactions",
+    "brief"
+  ],
+  "properties": {
+    "kind": {
+      "const": "rm.pre_meeting_brief"
+    },
+    "version": {
+      "const": "0.1.0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "thread_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "skill": {
+      "const": "pre_meeting_brief"
+    },
+    "customer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "risk_level",
+        "aum",
+        "liquidity_need",
+        "investment_horizon"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "risk_level": {
+          "type": "string",
+          "pattern": "^R[1-5]$"
+        },
+        "aum": {
+          "type": "number",
+          "minimum": 0
+        },
+        "liquidity_need": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "investment_horizon": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "memory_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "summary"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "product_candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "asset_class",
+          "risk_level",
+          "fit_score",
+          "reasons"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "asset_class": {
+            "type": "string",
+            "minLength": 1
+          },
+          "risk_level": {
+            "type": "string",
+            "pattern": "^R[1-5]$"
+          },
+          "fit_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "reasons": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "surfaces": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "surface", "props"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "CustomerProfileCard",
+              "ProductFitTable",
+              "PerformanceChart",
+              "MemoryDiffCard",
+              "BriefExportPanel"
+            ]
+          },
+          "props": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "pending_interactions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "action",
+          "surface_id",
+          "blocking",
+          "schema"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "const": "select_products"
+          },
+          "surface_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "blocking": {
+            "const": true
+          },
+          "schema": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "brief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "summary", "talking_points"],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "talking_points": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}
