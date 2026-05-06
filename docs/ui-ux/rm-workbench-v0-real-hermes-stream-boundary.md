@@ -23,7 +23,7 @@ structured RM Skill-like contract
 
 ```text
 当事件来源从 backend mock stream 变成真实 Hermes Agent run 时，
-AG-UI/A2UI events、pending interaction resolve、Skill structured output、
+AG-UI/A2UI events、pending interaction resolve、RM Skill.md、RM Workbench emit tool、
 Memory proposal 分别应该接在哪一层？
 ```
 
@@ -46,7 +46,7 @@ Memory proposal 分别应该接在哪一层？
 未确认：
 
 - 真实 `/api/chat/stream` 是否直接输出 AG-UI-shaped event，还是继续输出现有 SSE event，再由 frontend bridge 映射。
-- RM Skill structured output 在 Hermes Agent 内应该以什么形式出现。
+- RM Skill.md 与专用 `rm_workbench_emit_contract` 工具如何分工。
 - Hermes run 如何等待 structured UI input，并在 `/api/rm-workbench/pending/resolve` 后继续。
 - Memory proposal 如何进入 UI，但不自动写入真实 Memory。
 - CopilotKit frontend utilities 是否能只作为局部 UI helper 使用。
@@ -124,7 +124,7 @@ A
 - `frontend/src/agui/aguiReducer.ts` 是否能消费 `rm_workbench` SSE payload 中的 AG-UI events。
 - `api/routes.py::_handle_sse_stream` 是否需要对 `rm_workbench` event 做任何特殊 envelope。
 
-### 3.2 RM Skill structured output 从哪里来？
+### 3.2 RM Skill.md 与 emit tool 如何分工？
 
 当前 mock path：
 
@@ -135,27 +135,31 @@ docs fixture -> api.rm_workbench.mock_data -> api.rm_workbench.adapter
 真实 path 候选：
 
 ```text
-A. Hermes Agent Skill returns a structured JSON contract.
-B. Hermes Agent tool output includes a structured rm_workbench_contract field.
+A. RM Skill.md 指导 Agent；Agent 调用专用 rm_workbench_emit_contract 工具提交 structured contract。
+B. 任意 Hermes Agent tool output 只要包含 rm_workbench_contract 字段就触发 adapter。
 C. LLM text contains JSON and hermes-webui tries to parse it.
 ```
 
-V0 必须排除：
+V0 倾向：
 
 ```text
-C
+A
 ```
 
 原因：
 
+- Hermes 当前 Skill 是文档型 skill：`SKILL.md` 通过 `skill_view` 或 slash command 注入上下文，不天然等于会返回 JSON 的函数。
+- `rm_workbench_emit_contract` 给 adapter 一个稳定、可识别、可验证的抓取点。
+- 扫描任意 tool output 容易误判，应该收窄到专用工具。
 - 我们已经决定不从自然语言里猜 UI。
 - adapter 只能 map structured contract，不能 parse assistant prose。
 
 下一张 issue 要验证：
 
-- Hermes Agent 当前 Skill / tool result 是否已有 structured output 约定。
-- `api.streaming._run_agent_streaming` 能否在 tool progress 或 final output callback 中识别 structured contract。
-- 如果 Hermes Agent 暂时没有 RM Skill contract，V0 是否先加一个 contract injection seam，而不是实现真实 Skill。
+- Hermes WebUI 当前能否在不改 Hermes Agent runtime 的情况下暴露 `rm_workbench_emit_contract` 工具。
+- `api.streaming._run_agent_streaming` 能否在该专用 tool completion 上识别 contract。
+- 如果必须修改 `/Users/hywl/hermes-agent` 才能注册工具，是否拆成独立 issue。
+- RM Skill.md 应如何指示 Agent 在需要 UI / pending interaction / memory proposal 时调用 emit tool。
 
 ### 3.3 pending interaction resolve 如何回到 Hermes run？
 
@@ -172,7 +176,7 @@ api.streaming registers pending interaction notify callback
 
 ```text
 resolve_pending(...) 只把 result 放回 _PendingInteractionEntry。
-但真实 Hermes run 需要一个 blocking wait point 或 callback，把 UI payload 返回给正在运行的 Skill/tool。
+但真实 Hermes run 需要一个 blocking wait point 或 callback，把 UI payload 返回给正在运行的 emit tool。
 ```
 
 下一张 issue 要验证：
@@ -198,7 +202,7 @@ Memory proposal-first, no automatic write.
 
 下一张 issue 要验证：
 
-- RM Skill structured contract 是否应该包含：
+- RM Workbench contract 是否应该包含：
 
 ```json
 {
@@ -304,7 +308,8 @@ React workbench
   -> GET /api/chat/stream
   -> api.streaming._run_agent_streaming
   -> Hermes Agent runtime
-  -> RM Skill structured contract
+  -> RM Skill.md guides Agent
+  -> rm_workbench_emit_contract submits structured contract
   -> api.rm_workbench.adapter
   -> rm_workbench SSE event carrying AG-UI events
   -> frontend aguiReducer + A2UI renderer
@@ -324,6 +329,7 @@ React workbench
 api/streaming.py
 api/pending_interactions.py
 api/routes.py
+api/rm_workbench/emit_tool.py
 api/rm_workbench/adapter.py
 api/rm_workbench/contracts.py
 frontend/src/api/hermesClient.ts
@@ -352,6 +358,23 @@ tests/test_pending_interactions.py
 }
 ```
 
+同时必须说明 `rm_workbench_emit_contract` 的最小接口：
+
+```json
+{
+  "tool_name": "rm_workbench_emit_contract",
+  "arguments": {
+    "contract": {
+      "kind": "rm.pre_meeting_brief",
+      "version": "v0.1.0",
+      "surfaces": [],
+      "pending_interactions": [],
+      "memory_proposals": []
+    }
+  }
+}
+```
+
 ### 5.4 Pending Interaction Resume Semantics
 
 必须说明：
@@ -360,14 +383,14 @@ tests/test_pending_interactions.py
 - `resolve_pending` 是 resolve oldest 还是 resolve by id。
 - blocking wait timeout 是多少。
 - cancel stream 时如何 unblock。
-- resolve payload 如何返回给 Skill/tool。
+- resolve payload 如何返回给 emit tool。
 
 ### 5.5 Tests Required For Next Implementation Issue
 
 必须至少包含：
 
 ```text
-1. real-stream bridge emits rm_workbench SSE event when adapter receives structured contract
+1. real-stream bridge emits rm_workbench SSE event when rm_workbench_emit_contract submits structured contract
 2. frontend reducer can consume rm_workbench payload containing AG-UI events
 3. pending interaction resolve by interaction_id resumes waiting entry
 4. stream cancel clears pending interaction and unblocks wait
@@ -398,7 +421,7 @@ Do not do:
 RM Workbench V0 Real Stream Bridge
 ```
 
-这张 issue 的默认目标不是实现真实 RM Skill，而是先把真实 `/api/chat/stream` 能承载 hermes-webui-side structured contract -> adapter -> `rm_workbench` SSE payload 的 bridge 打通。
+这张 issue 的默认目标不是实现完整真实 RM Skill.md，而是先把真实 `/api/chat/stream` 能承载 `rm_workbench_emit_contract` -> adapter -> `rm_workbench` SSE payload 的 bridge 打通。
 
 ### 5.7 Open Questions That Require User Approval
 
@@ -447,7 +470,7 @@ Produce docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md, answ
 
 Questions to answer:
 1. Should real Hermes stream carry rm_workbench SSE events containing AG-UI events, or should /api/chat/stream become AG-UI top-level events?
-2. Where should RM Skill structured output be detected and mapped by api.rm_workbench.adapter?
+2. How should RM Skill.md guide Agent to call rm_workbench_emit_contract, and where should that tool's contract be detected and mapped by api.rm_workbench.adapter?
 3. How should /api/rm-workbench/pending/resolve return structured UI input to the running Hermes run?
 4. How should Memory proposals be surfaced without automatic writes?
 5. What remains reference-only for CopilotKit?

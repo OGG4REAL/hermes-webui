@@ -901,13 +901,14 @@ C. Add a separate real /api/rm-workbench/stream route.
 
 Default recommendation should be `A` unless inspection proves a concrete blocker.
 
-- [ ] **Step 3: Define the structured RM Skill output seam**
+- [ ] **Step 3: Define the RM Skill.md and emit tool seam**
 
-The result doc must reject natural-language parsing and define where structured contracts enter the webui adapter:
+The result doc must reject natural-language parsing and define the split between RM Skill.md and the dedicated emit tool:
 
 ```text
-Hermes Agent Skill/tool structured result
-  -> api.streaming detects rm_workbench contract
+RM Skill.md guides Agent
+  -> Agent calls rm_workbench_emit_contract
+  -> api.streaming detects that tool completion
   -> api.rm_workbench.adapter maps contract
   -> rm_workbench SSE event carries AG-UI events
 ```
@@ -919,10 +920,10 @@ The result doc must answer:
 ```text
 Should resolve require interaction_id?
 Should resolve_pending resolve oldest or by id?
-Where does the running Hermes Skill/tool block?
+Where does the running emit tool block?
 How does cancel_stream clear and unblock pending interactions?
 What timeout should V0 use?
-What exact payload returns to the Skill/tool?
+What exact payload returns to the emit tool?
 ```
 
 - [ ] **Step 5: Define Memory proposal boundary**
@@ -953,7 +954,7 @@ The default should remain `reference only` unless there is a narrowly scoped fro
 The result doc must include tests for:
 
 ```text
-1. real-stream bridge emits rm_workbench SSE event when adapter receives structured contract
+1. real-stream bridge emits rm_workbench SSE event when rm_workbench_emit_contract submits structured contract
 2. frontend reducer can consume rm_workbench payload containing AG-UI events
 3. pending interaction resolve by interaction_id resumes waiting entry
 4. stream cancel clears pending interaction and unblocks wait
@@ -1041,7 +1042,7 @@ The user should explicitly approve these before any real Hermes stream implement
 
 1. Whether the real integration preserves existing `/api/chat/stream` SSE event names and carries AG-UI payloads inside `rm_workbench` events.
 2. Whether pending interaction resolve must target by `interaction_id`, replacing the current oldest-entry default for production RM interactions.
-3. Whether the first real integration should add a hermes-webui-side contract injection seam before modifying Hermes Agent runtime.
+3. Whether the first real integration can expose `rm_workbench_emit_contract` entirely from hermes-webui before modifying Hermes Agent runtime.
 4. Whether `memory_proposals` enter the V0 contract now, with UI proposal rendering only and no automatic write.
 5. Whether CopilotKit remains reference-only until the real Hermes stream boundary is verified.
 

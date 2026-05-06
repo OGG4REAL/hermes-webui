@@ -65,7 +65,7 @@ Hermes Agent runtime
 用途：
 
 - 作为 `MYM-27` 之后的下一张 planning/evaluation issue 输入。
-- 明确真实 Hermes `/api/chat/stream`、RM Skill structured output、pending interaction resume、Memory proposal、CopilotKit 边界。
+- 明确真实 Hermes `/api/chat/stream`、RM Skill.md 与 `rm_workbench_emit_contract` 分工、pending interaction resume、Memory proposal、CopilotKit 边界。
 - 防止下一步直接漂到完整 RM Skill 或完整工作台 UI 大实现。
 
 ---
@@ -366,7 +366,7 @@ Decide how the MYM-27 backend mock stream should evolve into a real Hermes /api/
   - 保留现有 `/api/chat/stream` SSE event names，并新增/复用 `rm_workbench` event 承载 AG-UI payload。
   - 把 `/api/chat/stream` 整体改成 AG-UI top-level events。
   - 新增独立真实 `/api/rm-workbench/stream`。
-- 明确 RM Skill structured output seam。
+- 明确 RM Skill.md 与专用 `rm_workbench_emit_contract` 工具的分工。
 - 明确 pending interaction resume semantics。
 - 明确 Memory proposal 只展示、不自动写入。
 - 明确 CopilotKit 当前是 reference-only、defer，还是有可局部复用的 frontend utility。
@@ -446,7 +446,7 @@ RM Workbench V0 Real Hermes Stream Boundary Evaluation
 目标：
 
 - 明确真实 Hermes `/api/chat/stream` 如何承载 AG-UI standard events 与 `CUSTOM a2ui.surface.messages`。
-- 明确 RM Skill structured output 在 Hermes Agent runtime 内的生成位置。
+- 明确 RM Skill.md 如何指导 Agent 调用 `rm_workbench_emit_contract`，以及该 tool contract 在 hermes-webui 侧如何进入 adapter。
 - 明确 pending interaction resolve 如何回到 Hermes run，而不是只停在 hermes-webui backend。
 - 明确是否需要 CopilotKit frontend utilities；不做 runtime takeover。
 - 明确 Memory proposal 的只读/待确认边界，暂不做自动写入。
@@ -499,5 +499,5 @@ MYM-24、MYM-25、MYM-26、MYM-27 已完成并通过 Codex review。现在请创
 
 RM Workbench V0 Real Hermes Stream Boundary Evaluation
 
-请不要直接实现真实 RM Skill 或 CopilotKit runtime。目标是把 MYM-27 的 backend mock stream 推向真实 Hermes chat/stream 前，先明确事件承载、Skill structured output 生成位置、pending interaction resolve 回流路径、Memory proposal 边界和 CopilotKit 可用边界。请产出 docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md，内容包括推荐架构、被拒绝方案、下一张 implementation issue 的精确文件边界、最小 contract shape、pending interaction resume 语义、测试清单、风险和验收标准。
+请不要直接实现完整真实 RM Skill 或 CopilotKit runtime。目标是把 MYM-27 的 backend mock stream 推向真实 Hermes chat/stream 前，先明确事件承载、RM Skill.md 与专用 rm_workbench_emit_contract 工具的分工、pending interaction resolve 回流路径、Memory proposal 边界和 CopilotKit 可用边界。请产出 docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md，内容包括推荐架构、被拒绝方案、下一张 implementation issue 的精确文件边界、最小 contract shape、pending interaction resume 语义、测试清单、风险和验收标准。
 ```
