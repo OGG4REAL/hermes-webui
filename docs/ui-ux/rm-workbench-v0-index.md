@@ -2,7 +2,7 @@
 
 路径：`docs/ui-ux/rm-workbench-v0-index.md`
 状态：`active / start here`
-更新时间：`2026-04-30`
+更新时间：`2026-05-06`
 目的：作为 RM Workbench V0 的唯一入口，避免后续工程 agent 被早期讨论文档绕进去。
 
 ---
@@ -184,6 +184,7 @@ OK: resolved pending interaction pi_001 with 2 selected products
 - `MYM-25`: RM Workbench V0 Pending Interaction Backend
 - `MYM-26`: RM Workbench V0 Frontend Smoke Workbench
 - `MYM-27` / `1b30919c-e851-4c18-a513-f42f4980fdf5`: RM Workbench V0 Backend Mock Stream Integration
+- Issue 5 recommended next: RM Workbench V0 Real Hermes Stream Boundary Evaluation
 
 `MYM-27` 已完成并通过 Codex acceptance review。Codex 在验收中补了小修：mock stream loopback-only、中文 payload 回归测试、adapter surface data 补全、fixture 中文化，并完成浏览器 smoke。
 
@@ -339,6 +340,57 @@ npm run build
 - 不接真实客户数据或真实产品池。
 - 不做 Memory 自动写入。
 - 不做完整 RM 工作台视觉设计。
+
+### Issue 5: RM Workbench V0 Real Hermes Stream Boundary Evaluation
+
+状态：建议下一步创建。
+
+目标：
+
+```text
+Decide how the MYM-27 backend mock stream should evolve into a real Hermes /api/chat/stream integration before writing implementation code.
+```
+
+为什么现在做它：
+
+- MYM-27 只证明了 backend mock stream，不证明真实 Hermes run 能产出、等待、恢复这些事件。
+- pending interaction 当前已经能 resolve structured payload，但还没有定义真实 Hermes run 如何等待并拿回 payload。
+- Memory proposal 必须先确认 proposal-first 边界，避免工程 worker 顺手做自动写入。
+- CopilotKit 仍然不能作为 runtime takeover 进入主链路。
+
+范围建议：
+
+- 只读 `hermes-webui` 和 `/Users/hywl/hermes-agent` 相关代码。
+- 产出 `docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md`。
+- 推荐或否决以下真实 stream 架构：
+  - 保留现有 `/api/chat/stream` SSE event names，并新增/复用 `rm_workbench` event 承载 AG-UI payload。
+  - 把 `/api/chat/stream` 整体改成 AG-UI top-level events。
+  - 新增独立真实 `/api/rm-workbench/stream`。
+- 明确 RM Skill structured output seam。
+- 明确 pending interaction resume semantics。
+- 明确 Memory proposal 只展示、不自动写入。
+- 明确 CopilotKit 当前是 reference-only、defer，还是有可局部复用的 frontend utility。
+
+验收：
+
+```text
+1. Evaluation result doc exists.
+2. It chooses one stream architecture and rejects alternatives with concrete reasons.
+3. It lists exact files for the next implementation issue.
+4. It defines minimal RM Skill contract shape, including memory_proposals.
+5. It defines pending interaction resolve by interaction_id / timeout / cancel semantics.
+6. It lists tests for the next implementation issue.
+7. It explicitly keeps real RM Skill, real data, Memory writes, and CopilotKit runtime out of this issue.
+```
+
+不做：
+
+- 不实现真实 RM Skill。
+- 不修改 Hermes Agent runtime。
+- 不接真实客户数据或产品池。
+- 不做 Memory 自动写入。
+- 不接 CopilotKit runtime。
+- 不重写完整 Hermes chat stream。
 
 ---
 

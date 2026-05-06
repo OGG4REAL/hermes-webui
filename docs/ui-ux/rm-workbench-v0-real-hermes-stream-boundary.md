@@ -2,7 +2,7 @@
 
 路径：`docs/ui-ux/rm-workbench-v0-real-hermes-stream-boundary.md`
 状态：`next planning / evaluation issue`
-更新时间：`2026-04-30`
+更新时间：`2026-05-06`
 
 ---
 
@@ -80,6 +80,12 @@ planning / evaluation only
 
 ```text
 docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md
+```
+
+验收口径：
+
+```text
+This issue is complete only when the evaluation result doc makes a concrete architectural recommendation and gives the exact next implementation issue scope.
 ```
 
 ---
@@ -368,6 +374,41 @@ tests/test_pending_interactions.py
 5. no Memory write happens when memory proposals are emitted
 6. existing clarify/approval/cancel tests still pass
 ```
+
+### 5.6 Explicit Next Issue Draft
+
+必须包含下一张 implementation issue 的可复制描述，至少包括：
+
+```text
+Title:
+Repository:
+Source of truth docs:
+Allowed files:
+Disallowed files:
+Goal:
+Implementation steps:
+Acceptance commands:
+Manual audit:
+Do not do:
+```
+
+下一张 implementation issue 的默认标题建议：
+
+```text
+RM Workbench V0 Real Stream Bridge
+```
+
+这张 issue 的默认目标不是实现真实 RM Skill，而是先把真实 `/api/chat/stream` 能承载 hermes-webui-side structured contract -> adapter -> `rm_workbench` SSE payload 的 bridge 打通。
+
+### 5.7 Open Questions That Require User Approval
+
+如果 evaluation worker 发现以下任何问题，必须在 result doc 里标成 `requires user approval`：
+
+- 需要修改 `/Users/hywl/hermes-agent` runtime。
+- 需要引入 CopilotKit runtime。
+- 需要连接真实客户数据或真实产品池。
+- 需要把 Memory proposal 写入真实 Memory store。
+- 需要把 `/api/chat/stream` top-level event protocol 改成 AG-UI。
 
 ---
 

@@ -1035,19 +1035,23 @@ npm run build
 
 ---
 
-## 12. Decision Gates Before Coding
+## 13. Decision Gates Before Real Hermes Stream Implementation
 
-The user should explicitly approve these before implementation starts:
+The user should explicitly approve these before any real Hermes stream implementation starts:
 
-1. Whether to add production backend modules now or keep one more round in docs/spike.
-2. Whether loopback-only mock routes are acceptable in hermes-webui.
-3. Whether React host should live at `frontend/` in this repo.
-4. Which package manager to use for React host lockfile.
-5. Whether CopilotKit evaluation can install packages, or should remain documentation-only for now.
+1. Whether the real integration preserves existing `/api/chat/stream` SSE event names and carries AG-UI payloads inside `rm_workbench` events.
+2. Whether pending interaction resolve must target by `interaction_id`, replacing the current oldest-entry default for production RM interactions.
+3. Whether the first real integration should add a hermes-webui-side contract injection seam before modifying Hermes Agent runtime.
+4. Whether `memory_proposals` enter the V0 contract now, with UI proposal rendering only and no automatic write.
+5. Whether CopilotKit remains reference-only until the real Hermes stream boundary is verified.
 
 Current recommendation:
 
 ```text
-Start implementation with backend adapter + pending interaction only.
-Do not install React or CopilotKit packages until backend adapter tests pass.
+Do not start real stream implementation yet.
+First complete docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md.
+Default architecture: preserve existing /api/chat/stream and carry AG-UI events inside rm_workbench SSE payloads.
+Default pending interaction rule: resolve by interaction_id for production RM interactions.
+Default Memory rule: proposal-first, no automatic write.
+Default CopilotKit rule: reference-only, no runtime takeover.
 ```
