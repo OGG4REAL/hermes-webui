@@ -68,6 +68,16 @@ Hermes Agent runtime
 - 明确真实 Hermes `/api/chat/stream`、RM Skill.md 与 `rm_workbench_emit_contract` 分工、pending interaction resume、Memory proposal、CopilotKit 边界。
 - 防止下一步直接漂到完整 RM Skill 或完整工作台 UI 大实现。
 
+### 1.5 Roadmap
+
+`docs/ui-ux/rm-workbench-v0-roadmap.md`
+
+用途：
+
+- 看当前阶段做到哪。
+- 看 Issue 7 以后该怎么拆。
+- 区分“技术闭环”与“业务扩展”。
+
 ---
 
 ## 2. 可执行 Spike Reference
@@ -178,15 +188,28 @@ OK: resolved pending interaction pi_001 with 2 selected products
 
 ### 5.0 当前状态
 
-第一批 backend foundation issue 已完成并通过 Codex review：
+已完成并通过验收：
 
 - `MYM-24`: RM Workbench V0 Backend Adapter
 - `MYM-25`: RM Workbench V0 Pending Interaction Backend
 - `MYM-26`: RM Workbench V0 Frontend Smoke Workbench
 - `MYM-27` / `1b30919c-e851-4c18-a513-f42f4980fdf5`: RM Workbench V0 Backend Mock Stream Integration
-- Issue 5 recommended next: RM Workbench V0 Real Hermes Stream Boundary Evaluation
+- `MYM-28` / `a6638362-ccff-485d-809d-e8e245bdf1ee`: RM Workbench V0 Real Hermes Stream Boundary Evaluation
+- `MYM-29` / `d88a0be8-d46f-4011-89ef-b5b395704756`: RM Workbench V0 Real Stream Bridge
 
-`MYM-27` 已完成并通过 Codex acceptance review。Codex 在验收中补了小修：mock stream loopback-only、中文 payload 回归测试、adapter surface data 补全、fixture 中文化，并完成浏览器 smoke。
+验收依据：
+
+- `MYM-30` / `a60250cc-3e47-44f6-9cff-3db2a7398213`: Review RM Workbench V0 Real Stream Bridge
+
+当前下一步：
+
+- **Issue 7: Hermes Agent 侧 `rm_workbench_emit_contract` tool registration / runtime exposure**
+
+补充说明：
+
+- `MYM-28` 已产出评估文档，完成标准满足，可视为 pass。
+- `MYM-29` 已完成，`MYM-30` 最终 review comment 结论为无阻断性 findings。
+- 当前最大的未闭环项不是前端，而是 Hermes Agent 是否真实暴露 `rm_workbench_emit_contract`。
 
 ### Issue 1: RM Workbench V0 Backend Adapter
 
@@ -343,7 +366,7 @@ npm run build
 
 ### Issue 5: RM Workbench V0 Real Hermes Stream Boundary Evaluation
 
-状态：建议下一步创建。
+状态：`MYM-28` / `a6638362-ccff-485d-809d-e8e245bdf1ee` 已完成，可通过。
 
 目标：
 
@@ -394,6 +417,50 @@ Decide how the MYM-27 backend mock stream should evolve into a real Hermes /api/
 
 ---
 
+### Issue 6: RM Workbench V0 Real Stream Bridge
+
+状态：`MYM-29` / `d88a0be8-d46f-4011-89ef-b5b395704756` 已完成，`MYM-30` review 已通过。
+
+目标：
+
+```text
+Bridge the existing /api/chat/stream SSE channel with rm_workbench AG-UI payloads, without changing the top-level Hermes stream protocol.
+```
+
+关键结论：
+
+- 只识别 `tool_name == "rm_workbench_emit_contract"`。
+- `rm_workbench` SSE event 承载 `kind: "agui_events"`。
+- 前端只消费 `event: rm_workbench`，不消费 tool result，不解析 assistant text。
+- `memory_proposals` 只展示，不写入。
+
+剩余 follow-up：
+
+- Hermes Agent 侧尚未真实注册 `rm_workbench_emit_contract` 工具。
+
+### Issue 7: Hermes Agent `rm_workbench_emit_contract` Tool Registration
+
+状态：下一步主线，尚未创建。
+
+目标：
+
+```text
+Expose rm_workbench_emit_contract to real Hermes Agent runs so the Issue 6 stream bridge can be exercised end-to-end.
+```
+
+为什么它是下一步：
+
+- `hermes-webui` 侧 bridge 已经有了。
+- 当前缺的是 Agent 真正能调用那个 tool。
+- 这一步完成后，才有资格做第一条真实 RM workflow。
+
+建议先读：
+
+- `docs/ui-ux/rm-workbench-v0-roadmap.md`
+- `docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md`
+
+---
+
 ## 6. MYM-27 Acceptance Record
 
 Codex acceptance comment 结论：
@@ -435,57 +502,50 @@ RM_WORKBENCH_BACKEND=http://127.0.0.1:<port> npm run dev -- --host 127.0.0.1
 
 ---
 
-## 7. 下一步建议：真实 Hermes Chat / RM Skill 接入前的边界评估
+## 7. MYM-28 / MYM-29 Acceptance Notes
 
-MYM-27 之后，技术链路已经从 backend adapter 到 frontend renderer 打通。下一步不要立刻扩成完整 RM 工作台，建议先做一张 planning/evaluation issue：
+### 7.1 MYM-28
 
-```text
-RM Workbench V0 Real Hermes Stream Boundary Evaluation
-```
+- `MYM-28` 已产出 `docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md`
+- 文档已明确推荐架构、拒绝方案、contract shape、pending interaction resume、memory proposal 边界、CopilotKit 定位、下一张 implementation issue 文件范围与测试清单。
+- 后续本地文档还补充修正了一个关键口径：不是 RM Skill 返回 JSON，而是 `RM Skill.md + rm_workbench_emit_contract` 分工。
 
-目标：
+### 7.2 MYM-29 / MYM-30
 
-- 明确真实 Hermes `/api/chat/stream` 如何承载 AG-UI standard events 与 `CUSTOM a2ui.surface.messages`。
-- 明确 RM Skill.md 如何指导 Agent 调用 `rm_workbench_emit_contract`，以及该 tool contract 在 hermes-webui 侧如何进入 adapter。
-- 明确 pending interaction resolve 如何回到 Hermes run，而不是只停在 hermes-webui backend。
-- 明确是否需要 CopilotKit frontend utilities；不做 runtime takeover。
-- 明确 Memory proposal 的只读/待确认边界，暂不做自动写入。
-
-新窗口应先读：
-
-```text
-docs/ui-ux/rm-workbench-v0-real-hermes-stream-boundary.md
-```
-
-建议产物：
-
-```text
-docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md
-```
+- `MYM-29` 实现已完成。
+- `MYM-30` 最终 review comment 结论为无阻断性 findings。
+- 剩余风险不属于返工项，而是 follow-up issue：Hermes Agent 侧真实注册 `rm_workbench_emit_contract`。
 
 ---
 
-## 8. 不要在 Backend Mock Stream Issue 做的事
+## 8. 下一步建议
 
-Backend mock stream issue 不做：
+主线顺序：
 
-- CopilotKit runtime 接入。
-- 真实 RM Skill。
-- 真实客户数据。
-- 真实产品池。
-- Memory 自动写入。
-- Hermes Agent runtime 深层改造。
-- 完整 Hermes chat replacement。
-- 完整 RM 工作台视觉设计。
+```text
+Issue 7 -> Hermes Agent tool registration / runtime exposure
+Issue 8 -> first real RM workflow
+Issue 9 -> memory proposal review path
+```
 
-原因：
+完整阶段划分见：
 
-- 当前要先验证 frontend smoke UI 能消费 backend adapter 生成的 event stream。
-- 真正的 Hermes chat 接入和 CopilotKit 评估应在 backend mock stream 被验证后再进入下一批 issue。
+- `docs/ui-ux/rm-workbench-v0-roadmap.md`
 
 ---
 
-## 9. 推荐给下一张规划 Issue 的开场指令
+## 9. 当前不要提前做的事
+
+- CopilotKit runtime takeover
+- 完整 RM 工作台视觉重做
+- 多 workflow 并行扩展
+- 真实客户数据 / 真实产品池接入
+- 自动 Memory 写入
+- 为了 UI 去改 Hermes 整体 runtime loop
+
+---
+
+## 10. 推荐给下一张规划 / 实现 Issue 的开场指令
 
 可以把下面这段丢给新窗口：
 
@@ -493,11 +553,14 @@ Backend mock stream issue 不做：
 请在 /Users/hywl/hermes-webui 中工作。先阅读：
 
 - docs/ui-ux/rm-workbench-v0-index.md
-- docs/ui-ux/rm-workbench-v0-real-hermes-stream-boundary.md
+- docs/ui-ux/rm-workbench-v0-roadmap.md
+- docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md
 
-MYM-24、MYM-25、MYM-26、MYM-27 已完成并通过 Codex review。现在请创建一张 planning/evaluation issue：
+MYM-24 到 MYM-29 已完成，其中 MYM-30 已完成 review。现在的下一步不是继续扩前端，而是先把 Hermes Agent 侧的 rm_workbench_emit_contract 工具暴露链路打通。
 
-RM Workbench V0 Real Hermes Stream Boundary Evaluation
+请围绕下一个 issue：
 
-请不要直接实现完整真实 RM Skill 或 CopilotKit runtime。目标是把 MYM-27 的 backend mock stream 推向真实 Hermes chat/stream 前，先明确事件承载、RM Skill.md 与专用 rm_workbench_emit_contract 工具的分工、pending interaction resolve 回流路径、Memory proposal 边界和 CopilotKit 可用边界。请产出 docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md，内容包括推荐架构、被拒绝方案、下一张 implementation issue 的精确文件边界、最小 contract shape、pending interaction resume 语义、测试清单、风险和验收标准。
+Hermes Agent rm_workbench_emit_contract Tool Registration
+
+请先定位当前 Hermes Agent / Hermes WebUI 的 tool registration / exposure seam，判断这个专用工具应该在哪个 repo 暴露、最小改动面在哪、测试怎么做。请不要顺手扩成完整 RM workflow，不要引入 CopilotKit runtime，不要改 /api/chat/stream top-level protocol。先把 Agent -> tool -> rm_workbench bridge 这条链打通。
 ```
