@@ -30,6 +30,8 @@
 - `MYM-28` Real Hermes Stream Boundary Evaluation
 - `MYM-29` Real Stream Bridge
 - `MYM-30` Review RM Workbench V0 Real Stream Bridge
+- `MYM-31` Hermes Agent rm_workbench_emit_contract Tool Registration
+- `MYM-32` Review Hermes Agent rm_workbench_emit_contract Tool Registration
 
 这一阶段结束后，已经确认：
 
@@ -41,38 +43,17 @@
 - 前端只消费 `event: rm_workbench` 且 `data.kind === "agui_events"`。
 - Memory 继续是 proposal-first，不自动写入。
 
-当前唯一还没打通的关键 seam：
+当前已经打通的最小链路：
 
-- **Hermes Agent 侧真实暴露 `rm_workbench_emit_contract`。**
+- Hermes Agent 能真实暴露 `rm_workbench_emit_contract`
+- Hermes WebUI real chat runs 会在支持时自动补上 `rm_workbench` toolset
+- `MYM-29` 的 bridge 已经可以消费该 tool 的 completion
 
 ---
 
 ## 2. 下一步主线
 
-### Phase 1: Hermes Agent Tool Registration
-
-建议作为 **Issue 7**。
-
-目标：
-
-```text
-Expose rm_workbench_emit_contract to real Hermes Agent runs so the existing real stream bridge can run end-to-end.
-```
-
-为什么先做它：
-
-- `MYM-29` 已经把 `hermes-webui` 侧 bridge 铺好了。
-- 现在缺的不是前端，也不是 adapter，而是 Agent 能不能真实调用那个 tool。
-- 不先补这个 seam，继续做 workflow 只是堆 mock。
-
-退出标准：
-
-- Agent run 中能真实看到 `rm_workbench_emit_contract`。
-- 不扫描任意 tool result。
-- 不改 `/api/chat/stream` top-level protocol。
-- `MYM-29` 的 bridge 能被真实 tool 调用触发。
-
-### Phase 2: First Real RM Workflow
+### Phase 1: First Real RM Workflow
 
 建议作为 **Issue 8**。
 
@@ -82,9 +63,11 @@ Expose rm_workbench_emit_contract to real Hermes Agent runs so the existing real
 Implement one real RM workflow path driven by RM Skill.md + rm_workbench_emit_contract.
 ```
 
-建议只做一个场景：
+为什么现在轮到它：
 
-- `pre_meeting_brief`
+- `MYM-31` 已经把 Agent tool exposure seam 打通了。
+- 现在最值得验证的是第一条真实 workflow，而不是继续停留在基础设施层。
+- 如果这一阶段还不进 workflow，我们无法验证 RM Skill.md、tool 调用时机、以及用户交互闭环是否真的成立。
 
 退出标准：
 
@@ -93,7 +76,11 @@ Implement one real RM workflow path driven by RM Skill.md + rm_workbench_emit_co
 - 前端能看到真实 run 触发的 `ProductFitTable`。
 - 用户选择后能把结构化输入送回 run，Agent 继续下一步。
 
-### Phase 3: Memory Review Path
+建议只做一个场景：
+
+- `pre_meeting_brief`
+
+### Phase 2: Memory Review Path
 
 建议作为 **Issue 9**。
 
@@ -109,7 +96,7 @@ Turn proposal-first memory into a reviewable human workflow, still without autom
 - proposal approve / reject 状态
 - 后续写入目标系统边界
 
-### Phase 4: Productization
+### Phase 3: Productization
 
 这阶段才考虑：
 
@@ -163,6 +150,6 @@ Turn proposal-first memory into a reviewable human workflow, still without autom
 ## 5. 当前主线结论
 
 ```text
-先打通 Hermes Agent -> rm_workbench_emit_contract -> hermes-webui bridge。
-打通之后，再做第一条真实 RM workflow。
+Issue 7 已完成。
+下一步进入第一条真实 RM workflow，而不是继续追加协议层基础设施。
 ```

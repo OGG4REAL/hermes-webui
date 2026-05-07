@@ -196,20 +196,23 @@ OK: resolved pending interaction pi_001 with 2 selected products
 - `MYM-27` / `1b30919c-e851-4c18-a513-f42f4980fdf5`: RM Workbench V0 Backend Mock Stream Integration
 - `MYM-28` / `a6638362-ccff-485d-809d-e8e245bdf1ee`: RM Workbench V0 Real Hermes Stream Boundary Evaluation
 - `MYM-29` / `d88a0be8-d46f-4011-89ef-b5b395704756`: RM Workbench V0 Real Stream Bridge
+- `MYM-31` / `d14c857d-c505-46f2-882d-d1638a788868`: Hermes Agent rm_workbench_emit_contract Tool Registration
 
 验收依据：
 
 - `MYM-30` / `a60250cc-3e47-44f6-9cff-3db2a7398213`: Review RM Workbench V0 Real Stream Bridge
+- `MYM-32` / `f5c7e4e7-1bc7-40ba-8aef-8afc2fcb9e34`: Review Hermes Agent rm_workbench_emit_contract Tool Registration
 
 当前下一步：
 
-- **Issue 7: Hermes Agent 侧 `rm_workbench_emit_contract` tool registration / runtime exposure**
+- **Issue 8: First Real RM Workflow**
 
 补充说明：
 
 - `MYM-28` 已产出评估文档，完成标准满足，可视为 pass。
 - `MYM-29` 已完成，`MYM-30` 最终 review comment 结论为无阻断性 findings。
-- 当前最大的未闭环项不是前端，而是 Hermes Agent 是否真实暴露 `rm_workbench_emit_contract`。
+- `MYM-31` 已完成，`MYM-32` 最终 review comment 结论为无阻断性 findings。
+- 当前已经打通 Agent tool exposure seam，下一步应进入真实 workflow 验证。
 
 ### Issue 1: RM Workbench V0 Backend Adapter
 
@@ -440,7 +443,7 @@ Bridge the existing /api/chat/stream SSE channel with rm_workbench AG-UI payload
 
 ### Issue 7: Hermes Agent `rm_workbench_emit_contract` Tool Registration
 
-状态：下一步主线，尚未创建。
+状态：`MYM-31` / `d14c857d-c505-46f2-882d-d1638a788868` 已完成，`MYM-32` review 已通过。
 
 目标：
 
@@ -448,11 +451,25 @@ Bridge the existing /api/chat/stream SSE channel with rm_workbench AG-UI payload
 Expose rm_workbench_emit_contract to real Hermes Agent runs so the Issue 6 stream bridge can be exercised end-to-end.
 ```
 
-为什么它是下一步：
+结果：
 
-- `hermes-webui` 侧 bridge 已经有了。
-- 当前缺的是 Agent 真正能调用那个 tool。
-- 这一步完成后，才有资格做第一条真实 RM workflow。
+- Hermes Agent 现在能真实注册并暴露 `rm_workbench_emit_contract`
+- WebUI real chat runs 会在支持时自动补上 `rm_workbench` toolset
+- `MYM-29` bridge 继续只识别该专用 tool name，不扫描任意 tool result
+
+### Issue 8: First Real RM Workflow
+
+状态：下一步主线，尚未创建。
+
+目标：
+
+```text
+Implement one real RM workflow path driven by RM Skill.md + rm_workbench_emit_contract, using the already-finished bridge instead of adding more protocol infrastructure.
+```
+
+建议只做：
+
+- `pre_meeting_brief`
 
 建议先读：
 
@@ -523,9 +540,9 @@ RM_WORKBENCH_BACKEND=http://127.0.0.1:<port> npm run dev -- --host 127.0.0.1
 主线顺序：
 
 ```text
-Issue 7 -> Hermes Agent tool registration / runtime exposure
 Issue 8 -> first real RM workflow
 Issue 9 -> memory proposal review path
+Issue 10+ -> productization / real data / multi-workflow
 ```
 
 完整阶段划分见：
@@ -556,11 +573,11 @@ Issue 9 -> memory proposal review path
 - docs/ui-ux/rm-workbench-v0-roadmap.md
 - docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md
 
-MYM-24 到 MYM-29 已完成，其中 MYM-30 已完成 review。现在的下一步不是继续扩前端，而是先把 Hermes Agent 侧的 rm_workbench_emit_contract 工具暴露链路打通。
+MYM-24 到 MYM-31 已完成，其中 MYM-30 和 MYM-32 已完成 review。现在基础设施层的最小闭环已经打通，下一步不要再追加协议层工程，而是进入第一条真实 RM workflow。
 
 请围绕下一个 issue：
 
-Hermes Agent rm_workbench_emit_contract Tool Registration
+RM Workbench V0 First Real Pre-Meeting Brief Workflow
 
-请先定位当前 Hermes Agent / Hermes WebUI 的 tool registration / exposure seam，判断这个专用工具应该在哪个 repo 暴露、最小改动面在哪、测试怎么做。请不要顺手扩成完整 RM workflow，不要引入 CopilotKit runtime，不要改 /api/chat/stream top-level protocol。先把 Agent -> tool -> rm_workbench bridge 这条链打通。
+请围绕 RM Skill.md、rm_workbench_emit_contract、已完成的 real stream bridge、pending interaction resolve，做第一条真实 workflow。请不要引入 CopilotKit runtime，不要改 /api/chat/stream top-level protocol，不要扩成多 workflow，也不要接真实客户数据。先把 pre_meeting_brief 这一个场景闭环跑通。
 ```
