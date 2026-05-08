@@ -2,7 +2,7 @@
 
 路径：`docs/ui-ux/rm-workbench-v0-index.md`
 状态：`active / start here`
-更新时间：`2026-05-06`
+更新时间：`2026-05-08`
 目的：作为 RM Workbench V0 的唯一入口，避免后续工程 agent 被早期讨论文档绕进去。
 
 ---
@@ -77,6 +77,17 @@ Hermes Agent runtime
 - 看当前阶段做到哪。
 - 看 Issue 7 以后该怎么拆。
 - 区分“技术闭环”与“业务扩展”。
+
+### 1.6 Generic UI Catalog Plan
+
+`docs/ui-ux/rm-workbench-v0-generic-ui-catalog-plan.md`
+
+用途：
+
+- 作为 Issue 7.6 输入。
+- 明确通用 UI primitives 与 RM semantic surfaces 的分层。
+- 明确为什么继续复用 `rm_workbench_emit_contract`，而不是新增 `render_table` / `render_chart` tools。
+- 明确 `MetricCard`、`DataTable`、`LineChart`、`BarChart`、`PieChart`、`ChoiceList` 的最小验收边界。
 
 ---
 
@@ -207,7 +218,7 @@ OK: resolved pending interaction pi_001 with 2 selected products
 
 当前下一步：
 
-- **Issue 8: First Real RM Workflow**
+- **Issue 7.6: Generic A2UI Renderer Catalog**
 
 补充说明：
 
@@ -215,7 +226,8 @@ OK: resolved pending interaction pi_001 with 2 selected products
 - `MYM-29` 已完成，`MYM-30` 最终 review comment 结论为无阻断性 findings。
 - `MYM-31` 已完成，`MYM-32` 最终 review comment 结论为无阻断性 findings，但该验收没有覆盖真实 WebUI runtime smoke。
 - `MYM-34` 已补齐双目录 runtime alignment、真实 WebUI smoke、bridge 错误可见、`interaction_id` required、surface upsert 等 readiness 问题。
-- 剩余风险转入 Issue 8：让真实 RM business prompt 稳定诱导模型调用 `rm_workbench_emit_contract` 并完成 UI 交互闭环。
+- 进入 Issue 8 前先补 Issue 7.6：让同一条 `rm_workbench_emit_contract` 链路能承载 generic UI blocks，并让 React renderer 真实渲染常规图表/表格/选择控件。
+- Issue 8 的剩余风险：让真实 RM business prompt 稳定诱导模型调用 `rm_workbench_emit_contract` 并完成 UI 交互闭环。
 
 ### Issue 1: RM Workbench V0 Backend Adapter
 
@@ -462,7 +474,7 @@ Expose rm_workbench_emit_contract to real Hermes Agent runs so the Issue 6 strea
 
 ### Issue 8: First Real RM Workflow
 
-状态：下一步主线，尚未创建。
+状态：Issue 7.6 之后，尚未创建。
 
 目标：
 
@@ -477,9 +489,71 @@ Implement one real RM workflow path driven by RM Skill.md + rm_workbench_emit_co
 建议先读：
 
 - `docs/ui-ux/rm-workbench-v0-roadmap.md`
+- `docs/ui-ux/rm-workbench-v0-generic-ui-catalog-plan.md`
 - `docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md`
 - `docs/ui-ux/Hermes双目录问题.md`
 - `docs/ui-ux/rm-workbench-v0-code-review-2026-05-07.md`
+
+### Issue 7.6: Generic A2UI Renderer Catalog
+
+状态：下一步主线，尚未创建。
+
+目标：
+
+```text
+Prove that Hermes can emit generic structured UI blocks through the existing UI contract path, and React can render table/chart/choice primitives before the first RM-specific workflow.
+```
+
+为什么现在做它：
+
+- 当前前端已有 React/Vite smoke host，但只支持 `CustomerProfileCard`、`ProductFitTable`、`BriefExportPanel`。
+- `PerformanceChart` 已在后端 surface allowlist 和文档中出现，但前端还没有 chart renderer，也没有 chart library。
+- V0 需要先证明常规 AI-native UI 能生成，而不是只证明 RM 专属组件能渲染。
+
+范围：
+
+- 继续复用 `rm_workbench_emit_contract`。
+- 拓展 contract，允许 `ui.blocks` 承载 generic UI blocks。
+- 后端 adapter 将 generic blocks 映射成 `CUSTOM name = a2ui.surface.messages`。
+- 前端新增 generic primitives：
+  - `MetricCard`
+  - `DataTable`
+  - `LineChart`
+  - `BarChart`
+  - `PieChart`
+  - `ChoiceList`
+- 保持现有 RM semantic surfaces 可用。
+
+验收：
+
+```bash
+cd /Users/hywl/hermes-webui
+/Users/hywl/.hermes/hermes-agent/venv/bin/python -m pytest tests/test_rm_workbench_adapter.py tests/test_rm_workbench_mock_stream.py -q
+
+cd /Users/hywl/hermes-webui/frontend
+npm run build
+```
+
+人工验收：
+
+```text
+1. React workbench 能从 backend mock stream 或 fallback transcript 渲染 MetricCard。
+2. React workbench 能渲染 DataTable。
+3. React workbench 能渲染 LineChart 或 BarChart。
+4. React workbench 能渲染 PieChart。
+5. React workbench 能渲染 ChoiceList。
+6. ProductFitTable 仍能选择并 resolve pending interaction。
+7. issue comment 中保留截图或 SSE log。
+```
+
+不做：
+
+- 不实现第一条真实 `pre_meeting_brief` workflow。
+- 不要求真实 business prompt 稳定触发 tool call。
+- 不新增 `render_table` / `render_chart` / `render_form` Hermes tools。
+- 不执行任意 JSX / HTML / remote JS。
+- 不接真实客户数据。
+- 不引入 CopilotKit runtime。
 
 ### Issue 7.5: Runtime Alignment + Real Stream Readiness
 
@@ -578,7 +652,8 @@ RM_WORKBENCH_BACKEND=http://127.0.0.1:<port> npm run dev -- --host 127.0.0.1
 
 ```text
 Issue 7.5 -> done: runtime alignment + real WebUI smoke + readiness fixes
-Issue 8 -> next: first real RM workflow
+Issue 7.6 -> next: generic A2UI renderer catalog
+Issue 8 -> first real RM workflow
 Issue 9 -> memory proposal review path
 Issue 10+ -> productization / real data / multi-workflow
 ```
@@ -597,6 +672,8 @@ Issue 10+ -> productization / real data / multi-workflow
 - 真实客户数据 / 真实产品池接入
 - 自动 Memory 写入
 - 为了 UI 去改 Hermes 整体 runtime loop
+- 让模型生成任意 React code / JSX / HTML
+- 为每种 UI primitive 新增一个 Hermes tool
 
 ---
 
@@ -639,15 +716,16 @@ WebUI 真实 chat 中模型可见的工具列表
 
 - docs/ui-ux/rm-workbench-v0-index.md
 - docs/ui-ux/rm-workbench-v0-roadmap.md
+- docs/ui-ux/rm-workbench-v0-generic-ui-catalog-plan.md
 - docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md
 - docs/ui-ux/Hermes双目录问题.md
 - docs/ui-ux/rm-workbench-v0-code-review-2026-05-07.md
 
-MYM-24 到 MYM-34 已经完成 V0 技术骨架、real stream bridge、Hermes Agent tool registration、runtime alignment 和 real WebUI smoke。现在可以进入第一条真实 RM workflow，但仍要保持边界：只做 pre_meeting_brief，不接真实客户数据，不引入 CopilotKit runtime，不改 /api/chat/stream top-level protocol。
+MYM-24 到 MYM-34 已经完成 V0 技术骨架、real stream bridge、Hermes Agent tool registration、runtime alignment 和 real WebUI smoke。现在先不要直接进入第一条真实 RM workflow；先补 Generic A2UI Renderer Catalog，证明同一条 emit contract 链路能生成常规 UI：表格、指标卡、折线图、柱状图、饼图、选择列表。
 
 请围绕下一个 issue：
 
-RM Workbench V0 First Real Pre-Meeting Brief Workflow
+RM Workbench V0 Generic A2UI Renderer Catalog
 
-请实现第一条真实 pre_meeting_brief 链路：RM Skill.md 负责业务指令和何时 emit UI contract，Hermes Agent 通过 rm_workbench_emit_contract 发出 contract，WebUI 复用 MYM-29/MYM-34 bridge 转成 rm_workbench SSE，前端渲染 CustomerProfileCard 和 ProductFitTable，并至少完成一次 pending interaction resolve 后继续推理的闭环。验收必须包含一次从 WebUI 真实 chat 触发到预期 tool call / SSE event / UI 渲染的 manual smoke，截图或 SSE log 入 issue comment。请不要接真实客户数据，不要做自动 memory 写入，不要引入 CopilotKit runtime，不要重写 /api/chat/stream top-level protocol。
+请继续复用 rm_workbench_emit_contract，不要新增 render_table/render_chart/render_form 工具。拓展 contract 支持 ui.blocks generic UI blocks，后端 adapter 把它映射为 AG-UI CUSTOM / A2UI messages，前端 React renderer 支持 MetricCard、DataTable、LineChart、BarChart、PieChart、ChoiceList。验收必须能在前端真实看到这些 generic primitives，同时 ProductFitTable 仍能选择并 resolve pending interaction。截图或 SSE log 入 issue comment。请不要实现真实 pre_meeting_brief workflow，不要让模型生成任意 JSX/HTML，不要接真实客户数据，不要引入 CopilotKit runtime，不要改 /api/chat/stream top-level protocol。
 ```
