@@ -197,22 +197,25 @@ OK: resolved pending interaction pi_001 with 2 selected products
 - `MYM-28` / `a6638362-ccff-485d-809d-e8e245bdf1ee`: RM Workbench V0 Real Hermes Stream Boundary Evaluation
 - `MYM-29` / `d88a0be8-d46f-4011-89ef-b5b395704756`: RM Workbench V0 Real Stream Bridge
 - `MYM-31` / `d14c857d-c505-46f2-882d-d1638a788868`: Hermes Agent rm_workbench_emit_contract Tool Registration
+- `MYM-34` / `a46a35ec-9135-48ff-acef-85099508a182`: RM Workbench V0 Runtime Alignment + Real Stream Readiness
 
 验收依据：
 
 - `MYM-30` / `a60250cc-3e47-44f6-9cff-3db2a7398213`: Review RM Workbench V0 Real Stream Bridge
 - `MYM-32` / `f5c7e4e7-1bc7-40ba-8aef-8afc2fcb9e34`: Review Hermes Agent rm_workbench_emit_contract Tool Registration
+- `MYM-34` final review comment: runtime alignment 与 real WebUI smoke 已通过，可进入下一阶段
 
 当前下一步：
 
-- **Issue 7.5: Runtime Alignment + Real Stream Readiness**
+- **Issue 8: First Real RM Workflow**
 
 补充说明：
 
 - `MYM-28` 已产出评估文档，完成标准满足，可视为 pass。
 - `MYM-29` 已完成，`MYM-30` 最终 review comment 结论为无阻断性 findings。
 - `MYM-31` 已完成，`MYM-32` 最终 review comment 结论为无阻断性 findings，但该验收没有覆盖真实 WebUI runtime smoke。
-- 双目录复盘显示 runtime 实际加载 `~/.hermes/hermes-agent`，而 MYM-31 改动落在 `~/hermes-agent`；因此下一步必须先做 runtime alignment 和真实 WebUI smoke。
+- `MYM-34` 已补齐双目录 runtime alignment、真实 WebUI smoke、bridge 错误可见、`interaction_id` required、surface upsert 等 readiness 问题。
+- 剩余风险转入 Issue 8：让真实 RM business prompt 稳定诱导模型调用 `rm_workbench_emit_contract` 并完成 UI 交互闭环。
 
 ### Issue 1: RM Workbench V0 Backend Adapter
 
@@ -459,7 +462,7 @@ Expose rm_workbench_emit_contract to real Hermes Agent runs so the Issue 6 strea
 
 ### Issue 8: First Real RM Workflow
 
-状态：Issue 7.5 之后的下一步，尚未创建。
+状态：下一步主线，尚未创建。
 
 目标：
 
@@ -475,10 +478,12 @@ Implement one real RM workflow path driven by RM Skill.md + rm_workbench_emit_co
 
 - `docs/ui-ux/rm-workbench-v0-roadmap.md`
 - `docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md`
+- `docs/ui-ux/Hermes双目录问题.md`
+- `docs/ui-ux/rm-workbench-v0-code-review-2026-05-07.md`
 
 ### Issue 7.5: Runtime Alignment + Real Stream Readiness
 
-状态：下一步主线，尚未创建。
+状态：已完成，`MYM-34` / `a46a35ec-9135-48ff-acef-85099508a182`。
 
 目标：
 
@@ -499,6 +504,14 @@ Align Hermes Agent runtime path with the development repo, then prove WebUI real
 - 不实现完整 RM workflow。
 - 不接真实客户数据。
 - 不引入 CopilotKit runtime。
+
+验收记录：
+
+- runtime venv 已通过 editable install 对齐到 `/Users/hywl/hermes-agent`。
+- WebUI 启动日志显示 `tools` / `toolsets` / `rm_workbench` 来自预期 agent 目录。
+- `/tmp/hermes-smoke-final-evidence.log` 保存了启动日志、mock SSE、`interaction_id` enforcement、真实 chat session 与 runtime import 证据。
+- final review comment 结论为 pass。
+- 本阶段未要求真实业务 prompt 触发 tool call；该风险进入 Issue 8。
 
 ---
 
@@ -564,8 +577,8 @@ RM_WORKBENCH_BACKEND=http://127.0.0.1:<port> npm run dev -- --host 127.0.0.1
 主线顺序：
 
 ```text
-Issue 7.5 -> runtime alignment + real WebUI smoke + readiness fixes
-Issue 8 -> first real RM workflow
+Issue 7.5 -> done: runtime alignment + real WebUI smoke + readiness fixes
+Issue 8 -> next: first real RM workflow
 Issue 9 -> memory proposal review path
 Issue 10+ -> productization / real data / multi-workflow
 ```
@@ -630,11 +643,11 @@ WebUI 真实 chat 中模型可见的工具列表
 - docs/ui-ux/Hermes双目录问题.md
 - docs/ui-ux/rm-workbench-v0-code-review-2026-05-07.md
 
-MYM-24 到 MYM-31 的代码形状基本完成，但复盘发现真实 runtime 仍加载 ~/.hermes/hermes-agent，而 MYM-31 改动在 ~/hermes-agent。现在不要直接做第一条 RM workflow，先做 runtime alignment + real WebUI smoke + high-risk readiness fixes。
+MYM-24 到 MYM-34 已经完成 V0 技术骨架、real stream bridge、Hermes Agent tool registration、runtime alignment 和 real WebUI smoke。现在可以进入第一条真实 RM workflow，但仍要保持边界：只做 pre_meeting_brief，不接真实客户数据，不引入 CopilotKit runtime，不改 /api/chat/stream top-level protocol。
 
 请围绕下一个 issue：
 
-RM Workbench V0 Runtime Alignment + Real Stream Readiness
+RM Workbench V0 First Real Pre-Meeting Brief Workflow
 
-请先解决 Hermes Agent 双目录问题，确保 WebUI/gateway runtime 实际加载 ~/hermes-agent，并通过 WebUI 真实 chat 观察到 rm_workbench_emit_contract 可见或 rm_workbench SSE 事件出现。验收必须包含截图、SSE log、browser console log 或 server log。然后修掉真实 stream readiness 的高风险问题：bridge 错误可见、cancel 后不继续投递、surface upsert、基础 A2UI message 顺序处理、interaction_id required。请不要实现完整 RM workflow，不要接真实客户数据，不要引入 CopilotKit runtime，不要改 /api/chat/stream top-level protocol。
+请实现第一条真实 pre_meeting_brief 链路：RM Skill.md 负责业务指令和何时 emit UI contract，Hermes Agent 通过 rm_workbench_emit_contract 发出 contract，WebUI 复用 MYM-29/MYM-34 bridge 转成 rm_workbench SSE，前端渲染 CustomerProfileCard 和 ProductFitTable，并至少完成一次 pending interaction resolve 后继续推理的闭环。验收必须包含一次从 WebUI 真实 chat 触发到预期 tool call / SSE event / UI 渲染的 manual smoke，截图或 SSE log 入 issue comment。请不要接真实客户数据，不要做自动 memory 写入，不要引入 CopilotKit runtime，不要重写 /api/chat/stream top-level protocol。
 ```
