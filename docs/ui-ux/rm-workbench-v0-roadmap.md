@@ -53,7 +53,31 @@
 
 ## 2. 下一步主线
 
-### Phase 1: First Real RM Workflow
+### Phase 1: Runtime Alignment + Real Stream Readiness
+
+建议作为 **Issue 7.5**。
+
+目标：
+
+```text
+Align the Hermes Agent runtime path with the development repo, then prove the rm_workbench path through a real WebUI chat smoke before adding workflow logic.
+```
+
+为什么现在先做它：
+
+- 双目录复盘显示真实 runtime 仍加载 `~/.hermes/hermes-agent`，而 MYM-31 改动落在 `~/hermes-agent`。
+- unit test / mock-stream 已经证明协议形状，但没有证明真实 WebUI runtime 跑到同一份代码。
+- 不先补这个，Issue 8 会一边修基础设施一边写 workflow，验收会继续混乱。
+
+退出标准：
+
+- runtime venv import 的 `tools` / `toolsets` 来自预期 agent 目录。
+- `validate_toolset("rm_workbench") == True`。
+- WebUI 真实 chat 能观察到 `rm_workbench_emit_contract` 可见，或观察到 `event: rm_workbench`。
+- issue comment 中保留截图、SSE log、browser console log 或 server log。
+- 修掉真实 stream 立刻会撞的 readiness 问题。
+
+### Phase 2: First Real RM Workflow
 
 建议作为 **Issue 8**。
 
@@ -65,9 +89,9 @@ Implement one real RM workflow path driven by RM Skill.md + rm_workbench_emit_co
 
 为什么现在轮到它：
 
-- `MYM-31` 已经把 Agent tool exposure seam 打通了。
-- 现在最值得验证的是第一条真实 workflow，而不是继续停留在基础设施层。
-- 如果这一阶段还不进 workflow，我们无法验证 RM Skill.md、tool 调用时机、以及用户交互闭环是否真的成立。
+- Issue 7.5 先证明 runtime 与 WebUI 真实链路可用。
+- 之后最值得验证的是第一条真实 workflow，而不是继续停留在基础设施层。
+- 这一阶段要验证 RM Skill.md、tool 调用时机、以及用户交互闭环是否真的成立。
 
 退出标准：
 
@@ -80,7 +104,7 @@ Implement one real RM workflow path driven by RM Skill.md + rm_workbench_emit_co
 
 - `pre_meeting_brief`
 
-### Phase 2: Memory Review Path
+### Phase 3: Memory Review Path
 
 建议作为 **Issue 9**。
 
@@ -96,7 +120,7 @@ Turn proposal-first memory into a reviewable human workflow, still without autom
 - proposal approve / reject 状态
 - 后续写入目标系统边界
 
-### Phase 3: Productization
+### Phase 4: Productization
 
 这阶段才考虑：
 
@@ -113,6 +137,10 @@ Turn proposal-first memory into a reviewable human workflow, still without autom
 ### Issue 7
 
 `Hermes Agent rm_workbench_emit_contract Tool Registration`
+
+### Issue 7.5
+
+`RM Workbench V0 Runtime Alignment + Real Stream Readiness`
 
 ### Issue 8
 
@@ -142,14 +170,52 @@ Turn proposal-first memory into a reviewable human workflow, still without autom
 
 原因：
 
-- 当前主风险已经收敛到 **tool exposure seam**。
-- 这个 seam 没打通前，继续堆功能只会放大回退成本。
+- 当前主风险不是协议形状，而是 **runtime path 与真实 WebUI smoke 是否对齐**。
+- 真实 runtime 没被点亮前，继续堆业务功能只会放大回退成本。
 
 ---
 
-## 5. 当前主线结论
+## 5. Runtime / Streaming Issue 完成门槛
+
+凡是改动以下任一层的 issue：
+
+- Hermes Agent runtime / tools / toolsets
+- Hermes WebUI streaming bridge
+- `/api/chat/stream` 或 SSE event
+- 前端真实 stream 消费路径
+
+完成标准必须包含一次真实 WebUI smoke：
 
 ```text
-Issue 7 已完成。
-下一步进入第一条真实 RM workflow，而不是继续追加协议层基础设施。
+从 WebUI 真实 chat 触发
+  -> 观察到预期 tool call 或 SSE event
+  -> 观察到预期 UI 渲染或明确的错误 surface
+```
+
+验收记录必须进入 issue comment，至少包含其一：
+
+- 截图
+- SSE log
+- browser console log
+- server log 中的 `event: rm_workbench` / tool call 证据
+
+mock-stream、unit test、文档 review 只能证明协议形状，不能单独证明 runtime integration 已完成。
+
+每个涉及 Hermes Agent 的 issue 还必须先过开发环境对齐 checklist：
+
+```text
+1. which hermes 指向预期 venv
+2. runtime venv import 的 tools/toolsets 来自预期 agent 目录
+3. 新增 tool 可在 runtime venv 中 import
+4. WebUI 启动时 HERMES_WEBUI_AGENT_DIR / discover_agent_dir 指向同一目录
+5. WebUI 真实 chat 中模型能看见新增 tool
+```
+
+---
+
+## 6. 当前主线结论
+
+```text
+先补 Issue 7.5：runtime alignment + real WebUI smoke + high-risk readiness fixes。
+再进入第一条真实 RM workflow。
 ```
