@@ -89,6 +89,16 @@ Hermes Agent runtime
 - 明确为什么继续复用 `rm_workbench_emit_contract`，而不是新增 `render_table` / `render_chart` tools。
 - 明确 `MetricCard`、`DataTable`、`LineChart`、`BarChart`、`PieChart`、`ChoiceList` 的最小验收边界。
 
+### 1.7 Issue 7 Foundation Status
+
+`docs/ui-ux/rm-workbench-v0-issue7-foundation-status.md`
+
+用途：
+
+- 看 Issue 7 到当前为止到底哪些基建已经成立、哪些还没成立。
+- 看为什么 “React generic renderer 能跑” 不等于 “主 WebUI chat 已适合作为真实 RM workflow 正式宿主”。
+- 看为什么 Issue 8 前除了 Issue 7.6，还应插入一个 React frontend foundation slice。
+
 ---
 
 ## 2. 可执行 Spike Reference
@@ -219,6 +229,7 @@ OK: resolved pending interaction pi_001 with 2 selected products
 当前下一步：
 
 - **Issue 7.6: Generic A2UI Renderer Catalog**
+- **Issue 7.7: React Frontend Foundation for real WebUI path（建议新增）**
 
 补充说明：
 
@@ -226,8 +237,9 @@ OK: resolved pending interaction pi_001 with 2 selected products
 - `MYM-29` 已完成，`MYM-30` 最终 review comment 结论为无阻断性 findings。
 - `MYM-31` 已完成，`MYM-32` 最终 review comment 结论为无阻断性 findings，但该验收没有覆盖真实 WebUI runtime smoke。
 - `MYM-34` 已补齐双目录 runtime alignment、真实 WebUI smoke、bridge 错误可见、`interaction_id` required、surface upsert 等 readiness 问题。
-- 进入 Issue 8 前先补 Issue 7.6：让同一条 `rm_workbench_emit_contract` 链路能承载 generic UI blocks，并让 React renderer 真实渲染常规图表/表格/选择控件。
-- Issue 8 的剩余风险：让真实 RM business prompt 稳定诱导模型调用 `rm_workbench_emit_contract` 并完成 UI 交互闭环。
+- `MYM-35` 已证明同一条 `rm_workbench_emit_contract` 链路能承载 generic UI blocks，且 React generic renderer 能真实渲染常规图表/表格/选择控件。
+- `MYM-36` 已证明当前不是本地 schema stripping bug，而是模型/provider 对 opaque nested object 参数不稳定；该 issue 还顺手暴露了主 WebUI path 与 React RM host 之间仍有宿主层缺口。
+- 因此进入 Issue 8 前，除了 Issue 7.6 的 generic catalog 收口，还应补一层 React frontend foundation，把 RM structured UI 的正式宿主问题单独解决。
 
 ### Issue 1: RM Workbench V0 Backend Adapter
 
@@ -653,7 +665,8 @@ RM_WORKBENCH_BACKEND=http://127.0.0.1:<port> npm run dev -- --host 127.0.0.1
 ```text
 Issue 7.5 -> done: runtime alignment + real WebUI smoke + readiness fixes
 Issue 7.6 -> next: generic A2UI renderer catalog
-Issue 8 -> first real RM workflow
+Issue 7.7 -> React frontend foundation for real WebUI path
+Issue 8 -> first real RM workflow, only after 7.7
 Issue 9 -> memory proposal review path
 Issue 10+ -> productization / real data / multi-workflow
 ```
@@ -717,15 +730,16 @@ WebUI 真实 chat 中模型可见的工具列表
 - docs/ui-ux/rm-workbench-v0-index.md
 - docs/ui-ux/rm-workbench-v0-roadmap.md
 - docs/ui-ux/rm-workbench-v0-generic-ui-catalog-plan.md
+- docs/ui-ux/rm-workbench-v0-issue7-foundation-status.md
 - docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md
 - docs/ui-ux/Hermes双目录问题.md
 - docs/ui-ux/rm-workbench-v0-code-review-2026-05-07.md
 
-MYM-24 到 MYM-34 已经完成 V0 技术骨架、real stream bridge、Hermes Agent tool registration、runtime alignment 和 real WebUI smoke。现在先不要直接进入第一条真实 RM workflow；先补 Generic A2UI Renderer Catalog，证明同一条 emit contract 链路能生成常规 UI：表格、指标卡、折线图、柱状图、饼图、选择列表。
+MYM-24 到 MYM-34 已经完成 V0 技术骨架、real stream bridge、Hermes Agent tool registration、runtime alignment 和 real WebUI smoke。MYM-35 进一步证明 generic renderer catalog 在 React workbench host / mock path 可通，但这还不等于主 WebUI chat 前端已经完成正式接管。现在先完成 Generic A2UI Renderer Catalog 的收口，再进入 React Frontend Foundation for real WebUI path，把 structured UI 的正式宿主问题单独解决，之后才进入第一条真实 RM workflow。
 
 请围绕下一个 issue：
 
-RM Workbench V0 Generic A2UI Renderer Catalog
+RM Workbench V0 React Frontend Foundation for real WebUI path
 
-请继续复用 rm_workbench_emit_contract，不要新增 render_table/render_chart/render_form 工具。拓展 contract 支持 ui.blocks generic UI blocks，后端 adapter 把它映射为 AG-UI CUSTOM / A2UI messages，前端 React renderer 支持 MetricCard、DataTable、LineChart、BarChart、PieChart、ChoiceList。验收必须能在前端真实看到这些 generic primitives，同时 ProductFitTable 仍能选择并 resolve pending interaction。截图或 SSE log 入 issue comment。请不要实现真实 pre_meeting_brief workflow，不要让模型生成任意 JSX/HTML，不要接真实客户数据，不要引入 CopilotKit runtime，不要改 /api/chat/stream top-level protocol。
+请把当前已验证的 React RM workbench host 从独立 smoke app / mock path，推进成主 WebUI chat 路径中的正式 structured-UI 宿主。重点不是全站 React 重写，而是让主路径里有明确的 React mount point，可以消费真实 `event: rm_workbench`，并在日常对话中渲染 generic primitives 与 RM semantic surfaces，同时保持 `pending/resolve` 闭环。请继续复用 rm_workbench emit contract / bridge，不要引入 CopilotKit runtime，不要重写 `/api/chat/stream` top-level protocol，不要直接实现真实 pre-meeting brief workflow。验收必须包含一次从主 WebUI chat 真实触发到 UI 可见的 manual smoke，截图或 SSE log 入 issue comment。
 ```
