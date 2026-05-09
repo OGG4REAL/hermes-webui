@@ -2,8 +2,10 @@
 
 路径：`docs/ui-ux/rm-workbench-v0-roadmap.md`
 状态：`active / sequencing`
-更新时间：`2026-05-08`
+更新时间：`2026-05-09`
 入口：`docs/ui-ux/rm-workbench-v0-index.md`
+架构事实：`docs/ui-ux/rm-workbench-v0-architecture.md`
+技术决策：`docs/ui-ux/rm-workbench-v0-adr.md`
 
 ---
 
@@ -14,6 +16,8 @@
 1. V0 现在已经做到哪一步。
 2. 接下来应该先补哪条技术链。
 3. 哪些事情现在不要提前做。
+
+它不维护架构事实和技术决策。架构事实进入 `rm-workbench-v0-architecture.md`，技术取舍进入 `rm-workbench-v0-adr.md`。
 
 ---
 
@@ -93,10 +97,6 @@ Prove that Hermes can emit generic structured UI blocks through the existing UI 
 - 不引入 `render_table` / `render_chart` 等多个 Hermes tools。
 - 不执行任意 JSX / HTML / remote JS。
 - 现有 RM surfaces 仍可渲染，`ProductFitTable` pending interaction 仍可 resolve。
-
-### Phase 2: First Real RM Workflow
-
-在当前结论下，**不建议直接进入**。Issue 8 前需要再插一个前端基建阶段。
 
 ### Phase 1.5: React Frontend Foundation for real WebUI path
 

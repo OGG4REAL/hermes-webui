@@ -2,106 +2,167 @@
 
 路径：`docs/ui-ux/rm-workbench-v0-index.md`
 状态：`active / start here`
-更新时间：`2026-05-08`
+更新时间：`2026-05-09`
 目的：作为 RM Workbench V0 的唯一入口，避免后续工程 agent 被早期讨论文档绕进去。
 
 ---
 
-## 0. 一句话结论
+## 0. 文档体系结论
 
-V0 先做成熟协议优先的最小技术闭环：
+RM Workbench V0 的文档以后按三层维护：
+
+```text
+Core docs
+  -> Architecture
+  -> ADR
+  -> Roadmap
+
+Working docs
+  -> issue-specific specs / foundation notes / review notes
+
+Reference docs
+  -> spike / protocol examples / historical options
+```
+
+后续新 issue 默认先读 core docs。只有 issue 明确需要时，才读对应 working/reference docs。
+
+当前一句话架构：
 
 ```text
 Hermes Agent runtime
-  -> hermes-webui backend as source of truth
-  -> AG-UI standard event rail
-  -> AG-UI CUSTOM carries A2UI surface messages
-  -> React workbench host
-  -> pending interaction resolve returns structured UI input
+  -> hermes-webui backend
+  -> event: rm_workbench
+  -> AG-UI CUSTOM carries A2UI messages
+  -> React structured-UI host
+  -> pending interaction resolve returns structured input
 ```
-
-当前不做 CopilotKit runtime takeover。
-
-当前也不从自然语言里猜 UI。RM Skill 必须输出结构化 contract，adapter 只负责映射。
 
 ---
 
-## 1. 新窗口 / Multica Worker 只需要先读这些
+## 1. Core Docs
 
-### 1.1 技术选型边界
+### 1.1 Architecture
 
-`docs/ui-ux/rm-workbench-v0-technical-skeleton.md`
-
-用途：
-
-- 确认 Hermes Agent、hermes-webui、React、AG-UI、A2UI、CopilotKit 各自在哪一层。
-- 确认 V0 为什么先走 Hermes runtime 主导 + AG-UI/A2UI adapter。
-
-### 1.2 协议对齐结论
-
-`docs/ui-ux/rm-workbench-v0-agui-a2ui-alignment.md`
+`docs/ui-ux/rm-workbench-v0-architecture.md`
 
 用途：
 
-- 确认 AG-UI 标准事件边界。
-- 确认 A2UI surface message 边界。
-- 确认为什么不用自造 `surface.created` 这类 AG-UI event type。
-- 确认 V0 该用 `CUSTOM name = a2ui.surface.messages` 承载 A2UI message stream。
+- 当前系统组成。
+- runtime / backend / stream / React host / pending interaction 的职责边界。
+- 已成立与未成立的架构事实。
+- 后续 issue 不应该违反的 architecture rules。
 
-### 1.3 正式实现计划
+### 1.2 ADR
 
-`docs/ui-ux/rm-workbench-v0-implementation-plan.md`
-
-用途：
-
-- 工程执行入口。
-- 包含文件边界、任务拆分、测试、验收标准。
-- 后续 Multica issue 应从这份文档拆。
-
-### 1.4 下一步真实 Stream 边界评估
-
-`docs/ui-ux/rm-workbench-v0-real-hermes-stream-boundary.md`
+`docs/ui-ux/rm-workbench-v0-adr.md`
 
 用途：
 
-- 作为 `MYM-27` 之后的下一张 planning/evaluation issue 输入。
-- 明确真实 Hermes `/api/chat/stream`、RM Skill.md 与 `rm_workbench_emit_contract` 分工、pending interaction resume、Memory proposal、CopilotKit 边界。
-- 防止下一步直接漂到完整 RM Skill 或完整工作台 UI 大实现。
+- 已接受的技术决策。
+- 被明确拒绝的方向。
+- 每个决策的背景和影响。
+- 新决策应该追加为 ADR，而不是散落在 issue comment 或临时文档里。
 
-### 1.5 Roadmap
+### 1.3 Roadmap
 
 `docs/ui-ux/rm-workbench-v0-roadmap.md`
 
 用途：
 
-- 看当前阶段做到哪。
-- 看 Issue 7 以后该怎么拆。
-- 区分“技术闭环”与“业务扩展”。
+- 当前做到哪里。
+- 下一步先做哪条技术链。
+- Issue 7.6 / 7.7 / 8 的顺序。
+- 当前不要提前做什么。
 
-### 1.6 Generic UI Catalog Plan
+---
+
+## 2. Working Docs
+
+这些文档围绕 core docs 展开。它们可以指导某个 issue，但不能覆盖 Architecture / ADR / Roadmap。
+
+### 2.1 Generic UI Catalog
 
 `docs/ui-ux/rm-workbench-v0-generic-ui-catalog-plan.md`
 
 用途：
 
-- 作为 Issue 7.6 输入。
-- 明确通用 UI primitives 与 RM semantic surfaces 的分层。
-- 明确为什么继续复用 `rm_workbench_emit_contract`，而不是新增 `render_table` / `render_chart` tools。
-- 明确 `MetricCard`、`DataTable`、`LineChart`、`BarChart`、`PieChart`、`ChoiceList` 的最小验收边界。
+- Issue 7.6 输入。
+- 说明 generic UI primitives 与 RM semantic surfaces 的分层。
+- 说明为什么继续复用 `rm_workbench_emit_contract`，而不是新增 `render_table` / `render_chart` tools。
 
-### 1.7 Issue 7 Foundation Status
+### 2.2 Issue 7 Foundation Status
 
 `docs/ui-ux/rm-workbench-v0-issue7-foundation-status.md`
 
 用途：
 
-- 看 Issue 7 到当前为止到底哪些基建已经成立、哪些还没成立。
-- 看为什么 “React generic renderer 能跑” 不等于 “主 WebUI chat 已适合作为真实 RM workflow 正式宿主”。
-- 看为什么 Issue 8 前除了 Issue 7.6，还应插入一个 React frontend foundation slice。
+- Issue 7 阶段复盘。
+- 说明 React renderer 在 `frontend/` / mock path 已成立，不等于主 WebUI chat 前端已完成正式接管。
+- 说明为什么 Issue 7.7 必须先于 First Real RM Workflow。
+
+### 2.3 Real Stream Evaluation
+
+`docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md`
+
+用途：
+
+- 真实 Hermes stream bridge 的评估结果。
+- 解释 RM Skill.md 与 `rm_workbench_emit_contract` 的分工。
+- 保留 pending interaction、memory proposal、CopilotKit 边界的过程依据。
+
+### 2.4 Code Review / Runtime Notes
+
+- `docs/ui-ux/rm-workbench-v0-code-review-2026-05-07.md`
+- `docs/ui-ux/Hermes双目录问题.md`
+
+用途：
+
+- 保存重要 review 和 runtime 排障证据。
+- 只有当 issue 涉及同类风险时才需要阅读。
 
 ---
 
-## 2. 可执行 Spike Reference
+## 3. Reference Docs
+
+这些文档保留为参考，不再作为新 issue 的默认入口。
+
+### 3.1 Protocol Alignment
+
+`docs/ui-ux/rm-workbench-v0-agui-a2ui-alignment.md`
+
+用途：
+
+- AG-UI / A2UI 对齐细节。
+- 作为 ADR-004 的来源材料。
+
+### 3.2 Technical Skeleton
+
+`docs/ui-ux/rm-workbench-v0-technical-skeleton.md`
+
+用途：
+
+- 早期技术选型骨架。
+- 当前结论已经被 Architecture / ADR 吸收。
+
+### 3.3 Implementation Plan
+
+`docs/ui-ux/rm-workbench-v0-implementation-plan.md`
+
+用途：
+
+- 早期 V0 实现计划。
+- 后续只作为历史任务拆分参考，不作为当前唯一执行计划。
+
+### 3.4 Protocol Examples
+
+`docs/ui-ux/rm-workbench-v0-protocol-examples.md`
+
+用途：
+
+- JSON 样例参考。
+- 若与 Architecture / ADR 冲突，以 Core Docs 为准。
+
+### 3.5 Spike Reference
 
 `docs/ui-ux/rm-workbench-v0-spike/`
 
@@ -127,25 +188,7 @@ OK: resolved pending interaction pi_001 with 2 selected products
 
 ---
 
-## 3. Reference-Only 文档
-
-这些文档可以读，但不作为工程执行的第一事实源。
-
-### 3.1 Protocol Examples
-
-`docs/ui-ux/rm-workbench-v0-protocol-examples.md`
-
-用途：
-
-- 看具体 JSON 样例。
-- 帮助理解 Skill output、surface、pending interaction、memory proposal 如何串起来。
-
-注意：
-
-- 若样例和 `rm-workbench-v0-agui-a2ui-alignment.md` 冲突，以 alignment 文档为准。
-- 若样例和 `rm-workbench-v0-implementation-plan.md` 冲突，以 implementation plan 为准。
-
-### 3.2 Adapter Spike Plan
+### 3.6 Adapter Spike Plan
 
 `docs/ui-ux/rm-workbench-v0-adapter-spike-plan.md`
 
@@ -158,7 +201,7 @@ OK: resolved pending interaction pi_001 with 2 selected products
 
 - 工程执行以 `rm-workbench-v0-implementation-plan.md` 为准。
 
-### 3.3 React Migration Plan
+### 3.7 React Migration Plan
 
 `docs/ui-ux/hermes-react-migration-plan.md`
 
@@ -173,7 +216,7 @@ OK: resolved pending interaction pi_001 with 2 selected products
 
 ---
 
-## 4. Historical / Superseded 文档
+## 4. Historical / Superseded Docs
 
 这些是早期讨论记录，保留用于追溯，不建议 Multica worker 默认阅读。
 
@@ -201,13 +244,78 @@ OK: resolved pending interaction pi_001 with 2 selected products
 注意：
 
 - 其中对 A2UI/AG-UI/CopilotKit 的角色划分已经被后续文档修正。
-- 当前结论以 `rm-workbench-v0-technical-skeleton.md` 和 `rm-workbench-v0-agui-a2ui-alignment.md` 为准。
+- 当前结论以 Core Docs 为准。
 
 ---
 
-## 5. Multica Issue 拆分
+## 5. Documentation Maintenance Rules
 
-### 5.0 当前状态
+### 5.1 什么时候改 Architecture
+
+当系统当前事实发生变化时，改：
+
+`docs/ui-ux/rm-workbench-v0-architecture.md`
+
+例子：
+
+- 主 WebUI path 已经有正式 React structured-UI host。
+- `rm_workbench_emit_contract` 被泛化为 `emit_ui_contract`。
+- pending interaction resume 机制发生变化。
+
+### 5.2 什么时候改 ADR
+
+当做出新的技术取舍，或推翻旧取舍时，改：
+
+`docs/ui-ux/rm-workbench-v0-adr.md`
+
+例子：
+
+- 是否引入 CopilotKit runtime。
+- 是否新增 generic emit tool。
+- 是否改变 `/api/chat/stream` top-level protocol。
+
+### 5.3 什么时候改 Roadmap
+
+当 issue 顺序、阶段边界、完成标准变化时，改：
+
+`docs/ui-ux/rm-workbench-v0-roadmap.md`
+
+例子：
+
+- Issue 7.7 插入 Issue 8 前。
+- 某个阶段完成并进入下一阶段。
+- 某个 issue 被拆分或取消。
+
+### 5.4 什么时候新增 Working Doc
+
+只有当一个 issue 需要独立上下文时，才新增 working doc。
+
+新增后必须：
+
+- 在本 index 的 Working Docs 里登记。
+- 写清楚它依附哪个 core doc。
+- 写清楚它是否会在 issue 完成后被吸收到 Architecture / ADR / Roadmap。
+
+### 5.5 Git 管理
+
+文档变更和代码变更尽量分开提交。
+
+建议 commit 粒度：
+
+```text
+docs: update RM workbench architecture docs
+docs: record RM workbench ADR
+feat: implement RM workbench frontend host
+test: add RM workbench stream smoke coverage
+```
+
+不要把代码实现、fixture 数据、文档重排混在同一个 commit，除非它们必须一起才能保持仓库可验证。
+
+---
+
+## 6. Multica Issue 拆分
+
+### 6.0 当前状态
 
 已完成并通过验收：
 
@@ -601,7 +709,7 @@ Align Hermes Agent runtime path with the development repo, then prove WebUI real
 
 ---
 
-## 6. MYM-27 Acceptance Record
+## 7. MYM-27 Acceptance Record
 
 Codex acceptance comment 结论：
 
@@ -642,15 +750,15 @@ RM_WORKBENCH_BACKEND=http://127.0.0.1:<port> npm run dev -- --host 127.0.0.1
 
 ---
 
-## 7. MYM-28 / MYM-29 Acceptance Notes
+## 8. MYM-28 / MYM-29 Acceptance Notes
 
-### 7.1 MYM-28
+### 8.1 MYM-28
 
 - `MYM-28` 已产出 `docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md`
 - 文档已明确推荐架构、拒绝方案、contract shape、pending interaction resume、memory proposal 边界、CopilotKit 定位、下一张 implementation issue 文件范围与测试清单。
 - 后续本地文档还补充修正了一个关键口径：不是 RM Skill 返回 JSON，而是 `RM Skill.md + rm_workbench_emit_contract` 分工。
 
-### 7.2 MYM-29 / MYM-30
+### 8.2 MYM-29 / MYM-30
 
 - `MYM-29` 实现已完成。
 - `MYM-30` 最终 review comment 结论为无阻断性 findings。
@@ -658,7 +766,7 @@ RM_WORKBENCH_BACKEND=http://127.0.0.1:<port> npm run dev -- --host 127.0.0.1
 
 ---
 
-## 8. 下一步建议
+## 9. 下一步建议
 
 主线顺序：
 
@@ -677,7 +785,7 @@ Issue 10+ -> productization / real data / multi-workflow
 
 ---
 
-## 9. 当前不要提前做的事
+## 10. 当前不要提前做的事
 
 - CopilotKit runtime takeover
 - 完整 RM 工作台视觉重做
@@ -690,7 +798,7 @@ Issue 10+ -> productization / real data / multi-workflow
 
 ---
 
-## 10. Runtime / Streaming Issue 验收门槛
+## 11. Runtime / Streaming Issue 验收门槛
 
 凡是改动 Hermes Agent runtime / tools / toolsets、Hermes WebUI streaming bridge、`/api/chat/stream`、SSE event、或前端真实 stream 消费路径的 issue，不能只靠 unit test、mock-stream 或代码 review 关闭。
 
@@ -720,7 +828,7 @@ WebUI 真实 chat 中模型可见的工具列表
 
 ---
 
-## 11. 推荐给下一张规划 / 实现 Issue 的开场指令
+## 12. 推荐给下一张规划 / 实现 Issue 的开场指令
 
 可以把下面这段丢给新窗口：
 
