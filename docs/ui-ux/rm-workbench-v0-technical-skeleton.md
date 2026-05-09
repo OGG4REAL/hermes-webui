@@ -1,9 +1,11 @@
 # RM Agent-Native Workbench V0：技术选型骨架
 
 > 路径：`docs/ui-ux/rm-workbench-v0-technical-skeleton.md`
-> 状态：`active / V0 technical boundary`
-> 目的：先固定 RM Workbench V0 的技术选型、协议边界和待审核决策点；具体 Skill、mock 数据和 UI 组件细节放到后续文档。
+> 状态：`reference / superseded by Architecture + ADR`
+> 目的：保留早期技术选型骨架与讨论过程；当前架构事实和技术决策不再以本文为准。
 > V0 入口：`docs/ui-ux/rm-workbench-v0-index.md`
+
+> 注意：当前工程事实以 `rm-workbench-v0-architecture.md` 为准；技术取舍以 `rm-workbench-v0-adr.md` 为准；执行顺序以 `rm-workbench-v0-roadmap.md` 为准。
 
 ---
 

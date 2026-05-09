@@ -1,8 +1,11 @@
 # RM Workbench V0: Real Hermes Stream Boundary Evaluation
 
 路径：`docs/ui-ux/rm-workbench-v0-real-hermes-stream-boundary.md`
-状态：`next planning / evaluation issue`
+状态：`reference / completed evaluation prompt`
 更新时间：`2026-05-06`
+入口：`docs/ui-ux/rm-workbench-v0-index.md`
+
+注意：本文是 MYM-28 的评估输入。评估结果已沉淀到 `rm-workbench-v0-real-hermes-stream-evaluation-result.md`，当前架构事实与技术决策以 Architecture / ADR 为准。
 
 ---
 

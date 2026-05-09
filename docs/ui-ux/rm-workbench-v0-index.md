@@ -195,11 +195,11 @@ OK: resolved pending interaction pi_001 with 2 selected products
 用途：
 
 - 保留技术验证过程和决策门。
-- 解释为什么先做 mock harness，再进 implementation plan。
+- 解释为什么先做 mock harness，再进早期 implementation plan。
 
 注意：
 
-- 工程执行以 `rm-workbench-v0-implementation-plan.md` 为准。
+- 当前工程事实以 Core Docs 为准。
 
 ### 3.7 React Migration Plan
 
@@ -212,7 +212,7 @@ OK: resolved pending interaction pi_001 with 2 selected products
 
 注意：
 
-- V0 的第一批 backend adapter + pending interaction 已完成。下一批只做 frontend smoke workbench，不做完整 React chat replacement。
+- 这是 React host 背景材料，不是当前 sequencing source。当前顺序以 Roadmap 为准。
 
 ---
 

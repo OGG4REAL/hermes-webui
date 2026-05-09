@@ -1,11 +1,13 @@
 # RM Workbench V0 Code Review
 
 路径：`docs/ui-ux/rm-workbench-v0-code-review-2026-05-07.md`
-状态：`pending review`
+状态：`reference / historical code review`
 评审时间：`2026-05-07`
 评审范围：MYM-24 → MYM-32 累计落地的未提交 backend + frontend 改动
 评审人：Claude Code（双 reviewer 子代理：backend + frontend 并行）
 入口：`docs/ui-ux/rm-workbench-v0-index.md`
+
+注意：本文保留当时的 review 发现。后续 issue 已修复或吸收部分问题；当前进入 Issue 8 前的判断以 Architecture / ADR / Roadmap 和 Issue 7 Foundation Status 为准。
 
 ---
 

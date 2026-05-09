@@ -1,7 +1,10 @@
 # Hermes Agent 双目录问题分析
 
 **日期**：2026-05-07
-**状态**：待决策
+**状态**：reference / resolved runtime note
+**入口**：`docs/ui-ux/rm-workbench-v0-index.md`
+
+> 注意：本文保留 Hermes Agent 双目录问题的排查证据。该问题已通过后续 runtime alignment issue 收敛；当前 runtime / streaming 验收门槛以 `rm-workbench-v0-roadmap.md` 与 `rm-workbench-v0-adr.md` 为准。
 
 ---
 

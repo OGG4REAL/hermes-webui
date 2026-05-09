@@ -5,7 +5,7 @@
 > 目标读者：Hermes / Claude Code / 后续实现者
 > V0 入口：`docs/ui-ux/rm-workbench-v0-index.md`
 
-> 注意：本文只作为 React workbench host 的背景参考。RM Workbench V0 第一批工程改动以 backend adapter + pending interaction 为先，执行入口见 `rm-workbench-v0-implementation-plan.md`。
+> 注意：本文只作为 React workbench host 的背景参考。当前 RM Workbench V0 以 `rm-workbench-v0-architecture.md`、`rm-workbench-v0-adr.md`、`rm-workbench-v0-roadmap.md` 为准。
 
 ---
 

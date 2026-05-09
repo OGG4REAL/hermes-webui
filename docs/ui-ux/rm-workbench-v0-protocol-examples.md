@@ -2,11 +2,11 @@
 
 > 路径：`docs/ui-ux/rm-workbench-v0-protocol-examples.md`
 > 状态：`reference / illustrative examples`
-> 前置文档：`docs/ui-ux/rm-workbench-v0-technical-skeleton.md`
+> 前置文档：`docs/ui-ux/rm-workbench-v0-architecture.md`、`docs/ui-ux/rm-workbench-v0-adr.md`
 > 目的：用具体 JSON/TypeScript 样例说明 V0 中 Skill、A2UI surface、AG-UI event、pending interaction、memory proposal 如何串起来。
 > V0 入口：`docs/ui-ux/rm-workbench-v0-index.md`
 
-> 注意：本文是样例参考。若与 `rm-workbench-v0-agui-a2ui-alignment.md` 或 `rm-workbench-v0-implementation-plan.md` 冲突，以后两者为准。
+> 注意：本文是样例参考。若与 Architecture / ADR / Roadmap 冲突，以 core docs 为准。
 
 ---
 

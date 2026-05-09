@@ -5,7 +5,7 @@
 目的：在正式 implementation plan 之前，用最小闭环验证 Hermes runtime 主导、AG-UI/A2UI adapter、React workbench host、RM Skill structured output contract 这条路线是否成立。
 V0 入口：`docs/ui-ux/rm-workbench-v0-index.md`
 
-注意：本文保留 spike 推演过程。工程执行以 `rm-workbench-v0-implementation-plan.md` 为准。
+注意：本文保留 spike 推演过程。当前工程事实以 `rm-workbench-v0-architecture.md` 为准，技术决策以 `rm-workbench-v0-adr.md` 为准，执行顺序以 `rm-workbench-v0-roadmap.md` 为准。
 
 ---
 

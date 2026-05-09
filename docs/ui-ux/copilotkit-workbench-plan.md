@@ -5,7 +5,7 @@
 > 日期：2026-04-27
 > V0 入口：`docs/ui-ux/rm-workbench-v0-index.md`
 
-> 注意：本文是早期 A/B/X/Y 方案讨论。当前 V0 的协议边界与 CopilotKit 接入深度，以 `rm-workbench-v0-technical-skeleton.md` 与 `rm-workbench-v0-agui-a2ui-alignment.md` 为准。
+> 注意：本文是早期 A/B/X/Y 方案讨论。当前 V0 的协议边界与 CopilotKit 接入深度，以 `rm-workbench-v0-architecture.md` 与 `rm-workbench-v0-adr.md` 为准。
 
 ---
 

@@ -1,9 +1,11 @@
 # RM Workbench V0: AG-UI / A2UI Alignment Notes
 
 路径：`docs/ui-ux/rm-workbench-v0-agui-a2ui-alignment.md`
-状态：`active / protocol alignment / checked against current public docs on 2026-04-29`
-目的：把 V0 mock adapter 与 AG-UI/A2UI 当前公开协议对齐，避免把自定义概念误写成官方标准事件。
+状态：`reference / protocol source material / checked against public docs on 2026-04-29`
+目的：保留 AG-UI/A2UI 对齐细节，作为 ADR-004 的来源材料。
 V0 入口：`docs/ui-ux/rm-workbench-v0-index.md`
+
+注意：当前协议决策以 `rm-workbench-v0-adr.md` 为准；当前架构事实以 `rm-workbench-v0-architecture.md` 为准。
 
 ---
 

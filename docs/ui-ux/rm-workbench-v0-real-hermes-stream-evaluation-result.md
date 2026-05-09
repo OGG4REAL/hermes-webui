@@ -1,9 +1,11 @@
 # RM Workbench V0: Real Hermes Stream Evaluation Result
 
 路径：`docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md`
-状态：`evaluation result`
+状态：`working / accepted evaluation result`
 更新时间：`2026-05-06`
-权威文档：`rm-workbench-v0-index.md`、`rm-workbench-v0-real-hermes-stream-boundary.md`
+权威文档：`rm-workbench-v0-index.md`、`rm-workbench-v0-architecture.md`、`rm-workbench-v0-adr.md`
+
+注意：本文保留 MYM-28 的评估过程和论证。已被接受的决策应以 ADR 为准，当前架构事实应以 Architecture 为准。
 
 ---
 

@@ -1,5 +1,9 @@
 # RM Workbench V0 Adapter Implementation Plan
 
+> **Status:** `reference / historical implementation plan`
+> **Current source of truth:** Architecture = `rm-workbench-v0-architecture.md`; ADR = `rm-workbench-v0-adr.md`; sequencing = `rm-workbench-v0-roadmap.md`.
+> **Note:** This plan records the original V0 vertical-slice implementation shape. Do not use it as the current default issue plan without checking the core docs first.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the first executable RM Workbench V0 vertical slice: RM Skill structured contract -> Hermes-webui adapter -> AG-UI-compatible event stream carrying A2UI surface messages -> React workbench renderer -> pending interaction resolve.
