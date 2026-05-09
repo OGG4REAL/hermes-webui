@@ -29,6 +29,8 @@
 
 执行顺序放在 `rm-workbench-v0-roadmap.md`。
 
+具体代码改动边界放在 `rm-workbench-v0-coding-boundary.md`。
+
 ---
 
 ## 1. 当前一句话架构
@@ -238,4 +240,3 @@ RM semantic surface 可以组合 generic primitives，也可以附带 RM-specifi
 - 不为每种 UI primitive 新增独立 Hermes tool。
 - Memory proposal-first，不自动写入。
 - runtime / streaming / frontend host 相关 issue 必须有真实 WebUI smoke 证据。
-

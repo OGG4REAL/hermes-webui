@@ -13,11 +13,12 @@ RM Workbench V0 的唯一入口是：
 docs/ui-ux/rm-workbench-v0-index.md
 ```
 
-默认只读三份 core docs：
+默认只读 core docs：
 
 - `rm-workbench-v0-architecture.md`
 - `rm-workbench-v0-adr.md`
 - `rm-workbench-v0-roadmap.md`
+- `rm-workbench-v0-coding-boundary.md`
 
 其它 RM Workbench 文档都是 working / reference / historical material。除非 issue 明确要求，不要把它们当作当前工程事实源。
 
@@ -33,5 +34,6 @@ docs/ui-ux/rm-workbench-v0-index.md
 
 当执行顺序变化时，更新 Roadmap。
 
-当新增 issue-specific 文档时，必须在 `rm-workbench-v0-index.md` 登记。
+当代码边界、目录归属、测试验收规则变化时，更新 Coding Boundary。
 
+当新增 issue-specific 文档时，必须在 `rm-workbench-v0-index.md` 登记。

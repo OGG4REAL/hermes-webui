@@ -16,6 +16,7 @@ Core docs
   -> Architecture
   -> ADR
   -> Roadmap
+  -> Coding Boundary
 
 Working docs
   -> issue-specific specs / foundation notes / review notes
@@ -24,7 +25,7 @@ Reference docs
   -> spike / protocol examples / historical options
 ```
 
-后续新 issue 默认先读 core docs。只有 issue 明确需要时，才读对应 working/reference docs。
+后续新 issue 默认先读 core docs。涉及代码改动的 issue 必须读 Coding Boundary。只有 issue 明确需要时，才读对应 working/reference docs。
 
 当前一句话架构：
 
@@ -73,6 +74,17 @@ Hermes Agent runtime
 - 下一步先做哪条技术链。
 - Issue 7.6 / 7.7 / 8 的顺序。
 - 当前不要提前做什么。
+
+### 1.4 Coding Boundary
+
+`docs/ui-ux/rm-workbench-v0-coding-boundary.md`
+
+用途：
+
+- 约束后续 RM Workbench coding issue 的代码改动边界。
+- 说明 hermes-agent / hermes-webui backend / React structured-UI host 的目录归属。
+- 说明 streaming、contract、frontend layering、测试和 manual smoke 要求。
+- 作为 worker 开工前和 reviewer 验收时的代码边界依据。
 
 ---
 
