@@ -27,6 +27,7 @@ copilot-instructions.md
 # Generated screenshots and transient artifacts
 screenshot-*.png
 full-UI.png
+.playwright-cli/
 
 # Version file written by Docker/CI build — generated, never committed
 api/_version.py
@@ -43,3 +44,8 @@ docs/*
 # Local-only PR review harness: rendering drivers, sample bank, fixtures.
 # Used by Claude during deep reviews; never shared in the repo.
 .local-review/
+
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
+frontend/tsconfig.tsbuildinfo
