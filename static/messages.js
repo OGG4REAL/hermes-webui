@@ -824,6 +824,18 @@ function attachLiveStream(activeSid, streamId, uploaded=[], options={}){
       }catch(err){}
     });
 
+    source.addEventListener('rm_workbench',e=>{
+      if(!S.session||S.session.session_id!==activeSid) return;
+      try{
+        const d=JSON.parse(e.data);
+        if(d.kind==='agui_events'&&Array.isArray(d.events)){
+          if(typeof window.__rmWorkbenchEvent==='function'){
+            window.__rmWorkbenchEvent(e.data);
+          }
+        }
+      }catch(_){}
+    });
+
     source.addEventListener('metering',e=>{
       // TPS + HIGH/LOW stats for the header chip — emitted at 1 Hz during a stream,
       // silenced entirely when no sessions are active (ticker exits when idle).

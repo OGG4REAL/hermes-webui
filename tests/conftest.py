@@ -74,10 +74,10 @@ if not SERVER_SCRIPT.exists():
 def _discover_agent_dir() -> pathlib.Path:
     candidates = [
         os.getenv('HERMES_WEBUI_AGENT_DIR', ''),
-        str(HERMES_HOME / 'hermes-agent'),
         str(REPO_ROOT.parent / 'hermes-agent'),
-        str(HOME / '.hermes' / 'hermes-agent'),
         str(HOME / 'hermes-agent'),
+        str(HERMES_HOME / 'hermes-agent'),
+        str(HOME / '.hermes' / 'hermes-agent'),
     ]
     for c in candidates:
         if not c:
@@ -95,6 +95,9 @@ def _discover_python(agent_dir) -> str:
         venv_py = agent_dir / 'venv' / 'bin' / 'python'
         if venv_py.exists():
             return str(venv_py)
+    hermes_runtime_py = HOME / '.hermes' / 'hermes-agent' / 'venv' / 'bin' / 'python'
+    if hermes_runtime_py.exists():
+        return str(hermes_runtime_py)
     local_venv = REPO_ROOT / '.venv' / 'bin' / 'python'
     if local_venv.exists():
         return str(local_venv)

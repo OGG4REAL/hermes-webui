@@ -307,6 +307,33 @@ def _is_minimax_route(provider: str = '', model: str = '', base_url: str = '') -
     return 'minimax' in text or 'minimaxi.com' in text
 
 
+def _resolve_completed_tool_args(
+    *,
+    name: str | None,
+    completed_args,
+    live_tool_calls: list[dict] | None,
+):
+    """Recover tool args for completion events when the callback omits them.
+
+    Hermes Agent's ``tool.completed`` progress callback currently passes
+    ``args=None`` even though the corresponding ``tool.started`` event already
+    included the parsed tool arguments. Reuse the latest matching live entry so
+    WebUI bridges that depend on raw tool args can still process the completed
+    tool call.
+    """
+    if isinstance(completed_args, dict):
+        return completed_args
+    for live_tc in reversed(live_tool_calls or []):
+        if live_tc.get('done'):
+            continue
+        if not name or live_tc.get('name') == name:
+            live_args = live_tc.get('args')
+            if isinstance(live_args, dict):
+                return live_args
+            break
+    return completed_args
+
+
 def _aux_title_configured() -> bool:
     """Return True when any auxiliary title_generation config field is meaningfully set."""
     try:
@@ -1101,6 +1128,56 @@ def _sse(handler, event, data):
     handler.wfile.flush()
 
 
+def _append_rm_workbench_toolset_if_supported(toolsets: list) -> list:
+    """Append rm_workbench toolset if the hermes-agent build supports it.
+
+    Returns the (possibly extended) toolset list.  Gracefully returns the
+    original list unchanged when the toolsets module is unavailable or the
+    rm_workbench toolset does not exist.
+    """
+    try:
+        from toolsets import validate_toolset as _validate_ts
+        if _validate_ts("rm_workbench") and "rm_workbench" not in toolsets:
+            return list(toolsets) + ["rm_workbench"]
+    except Exception:
+        pass
+    return toolsets
+
+
+def _handle_rm_emit_tool(tool_args, session_id, cancel_event, put):
+    """Process an rm_workbench_emit_contract tool completion.
+
+    Validates the contract, maps to AG-UI events, and emits them via SSE.
+    Does NOT block — blocking wait belongs in the tool execution layer
+    (Hermes Agent runtime), not in this fire-and-forget callback.
+    """
+    try:
+        from api.rm_workbench.emit_tool import process_emit_tool
+    except ImportError:
+        logger.debug("RM workbench modules not available")
+        put('rm_workbench', {
+            'kind': 'agui_events',
+            'events': [{'type': 'RUN_ERROR', 'message': 'RM workbench modules not available on this server'}],
+        })
+        return
+
+    try:
+        events, _summary = process_emit_tool(tool_args)
+    except (ValueError, Exception) as exc:
+        logger.warning("rm_workbench_emit_contract failed: %s", exc)
+        put('rm_workbench', {
+            'kind': 'agui_events',
+            'events': [{'type': 'RUN_ERROR', 'message': f'rm_workbench_emit_contract failed: {exc}'}],
+        })
+        return
+
+    if cancel_event.is_set():
+        logger.debug("rm_workbench_emit_contract: cancelled, dropping %d events", len(events))
+        return
+
+    put('rm_workbench', {'kind': 'agui_events', 'events': events})
+
+
 def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, attachments=None, *, ephemeral=False):
     """Run agent in background thread, writing SSE events to STREAMS[stream_id].
 
@@ -1249,6 +1326,29 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
         except ImportError:
             logger.debug("Clarify module not available, falling back to polling")
 
+        _pending_interaction_registered = False
+        _unreg_pending_interaction_notify = None
+        try:
+            from api.pending_interactions import (
+                register_gateway_notify as _reg_pending_interaction_notify,
+                unregister_gateway_notify as _unreg_pending_interaction_notify,
+            )
+
+            def _pending_interaction_notify_cb(interaction_data):
+                put(
+                    'rm_workbench',
+                    {
+                        'kind': 'pending_interaction',
+                        'event': 'created',
+                        'data': interaction_data,
+                    },
+                )
+
+            _reg_pending_interaction_notify(session_id, _pending_interaction_notify_cb)
+            _pending_interaction_registered = True
+        except ImportError:
+            logger.debug("Pending interactions module not available")
+
         def _clarify_callback_impl(question, choices, sid, cancel_evt, put_event):
             """Bridge Hermes clarify prompts to the WebUI."""
             timeout = 120
@@ -1396,6 +1496,11 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
                     return
 
                 if event_type == 'tool.completed':
+                    completed_args = _resolve_completed_tool_args(
+                        name=name,
+                        completed_args=args,
+                        live_tool_calls=_live_tool_calls,
+                    )
                     for live_tc in reversed(_live_tool_calls):
                         if live_tc.get('done'):
                             continue
@@ -1411,10 +1516,21 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
                         'event_type': event_type,
                         'name': name,
                         'preview': preview,
-                        'args': args_snap,
+                        'args': (
+                            {
+                                k: (str(v)[:120] + ('...' if len(str(v)) > 120 else ''))
+                                for k, v in list(completed_args.items())[:4]
+                            }
+                            if isinstance(completed_args, dict)
+                            else args_snap
+                        ),
                         'duration': cb_kwargs.get('duration'),
                         'is_error': bool(cb_kwargs.get('is_error', False)),
                     })
+
+                    if name == 'rm_workbench_emit_contract':
+                        _handle_rm_emit_tool(completed_args, session_id, cancel_event, put)
+
                     return
 
             _AIAgent = _get_ai_agent()
@@ -1452,6 +1568,8 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
             # server toolsets are included, matching native CLI behaviour.
             from api.config import _resolve_cli_toolsets
             _toolsets = _resolve_cli_toolsets(_cfg)
+
+            _toolsets = _append_rm_workbench_toolset_if_supported(_toolsets)
 
             # Fallback model from profile config (e.g. for rate-limit recovery)
             _fallback = _cfg.get('fallback_model') or None
@@ -1989,6 +2107,14 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
                     _unreg_clarify_notify(session_id)
                 except Exception:
                     logger.debug("Failed to unregister clarify callback")
+            if (
+                _pending_interaction_registered
+                and _unreg_pending_interaction_notify is not None
+            ):
+                try:
+                    _unreg_pending_interaction_notify(session_id)
+                except Exception:
+                    logger.debug("Failed to unregister pending interaction callback")
             with _ENV_LOCK:
                 if old_cwd is None: os.environ.pop('TERMINAL_CWD', None)
                 else: os.environ['TERMINAL_CWD'] = old_cwd
@@ -2238,6 +2364,15 @@ def cancel_stream(stream_id: str) -> bool:
                 _clear_clarify_pending(agent.session_id)
         except Exception:
             logger.debug("Failed to clear clarify prompt during cancel")
+
+        # Clear RM workbench pending interactions so blocking waits unblock immediately.
+        try:
+            from api.pending_interactions import clear_pending as _clear_rm_pending
+
+            if agent and getattr(agent, "session_id", None):
+                _clear_rm_pending(agent.session_id)
+        except Exception:
+            logger.debug("Failed to clear RM pending interactions during cancel")
 
         # Put a cancel sentinel into the queue so the SSE handler wakes up
         q = STREAMS.get(stream_id)

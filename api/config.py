@@ -60,11 +60,11 @@ def _discover_agent_dir() -> Path:
 
     Priority:
       1. HERMES_WEBUI_AGENT_DIR env var  -- explicit override always wins
-      2. HERMES_HOME / hermes-agent      -- e.g. ~/.hermes/hermes-agent
-      3. Sibling of this repo            -- ../hermes-agent
-      4. Parent of this repo             -- ../../hermes-agent (nested layout)
-      5. Common install paths            -- ~/.hermes/hermes-agent (again as fallback)
-      6. HOME / hermes-agent             -- ~/hermes-agent (simple flat layout)
+      2. Sibling of this repo            -- ../hermes-agent
+      3. Parent of this repo             -- ../../hermes-agent (nested layout)
+      4. HOME / hermes-agent             -- ~/hermes-agent (simple flat layout)
+      5. HERMES_HOME / hermes-agent      -- e.g. ~/.hermes/hermes-agent
+      6. Common install paths            -- ~/.hermes/hermes-agent (again as fallback)
     """
     candidates = []
 
@@ -74,22 +74,23 @@ def _discover_agent_dir() -> Path:
             Path(os.getenv("HERMES_WEBUI_AGENT_DIR")).expanduser().resolve()
         )
 
-    # 2. HERMES_HOME / hermes-agent
-    hermes_home = os.getenv("HERMES_HOME", str(HOME / ".hermes"))
-    candidates.append(Path(hermes_home).expanduser() / "hermes-agent")
-
-    # 3. Sibling: <repo-root>/../hermes-agent
+    # 2. Sibling: <repo-root>/../hermes-agent.  This is the stable dev/server
+    # layout for paired hermes-webui + hermes-agent checkouts.
     candidates.append(REPO_ROOT.parent / "hermes-agent")
 
-    # 4. Parent is the agent repo itself (repo cloned inside hermes-agent/)
+    # 3. Parent is the agent repo itself (repo cloned inside hermes-agent/)
     if (REPO_ROOT.parent / "run_agent.py").exists():
         candidates.append(REPO_ROOT.parent)
 
-    # 5. ~/.hermes/hermes-agent (explicit common path)
-    candidates.append(HOME / ".hermes" / "hermes-agent")
-
-    # 6. ~/hermes-agent
+    # 4. ~/hermes-agent (simple flat layout)
     candidates.append(HOME / "hermes-agent")
+
+    # 5. HERMES_HOME / hermes-agent
+    hermes_home = os.getenv("HERMES_HOME", str(HOME / ".hermes"))
+    candidates.append(Path(hermes_home).expanduser() / "hermes-agent")
+
+    # 6. ~/.hermes/hermes-agent (explicit common path)
+    candidates.append(HOME / ".hermes" / "hermes-agent")
 
     # 7. XDG_DATA_HOME / hermes-agent  (e.g. ~/.local/share/hermes-agent)
     xdg_data = Path(os.getenv("XDG_DATA_HOME", str(HOME / ".local" / "share")))
@@ -113,8 +114,9 @@ def _discover_python(agent_dir: Path) -> str:
     Priority:
       1. HERMES_WEBUI_PYTHON env var
       2. Agent venv at <agent_dir>/venv/bin/python
-      3. Local .venv inside this repo
-      4. System python3
+      3. Existing Hermes runtime venv at ~/.hermes/hermes-agent/venv/bin/python
+      4. Local .venv inside this repo
+      5. System python3
     """
     if os.getenv("HERMES_WEBUI_PYTHON"):
         return os.getenv("HERMES_WEBUI_PYTHON")
@@ -136,6 +138,10 @@ def _discover_python(agent_dir: Path) -> str:
         venv_py_win = agent_dir / ".venv" / "Scripts" / "python.exe"
         if venv_py_win.exists():
             return str(venv_py_win)
+
+    hermes_runtime_py = HOME / ".hermes" / "hermes-agent" / "venv" / "bin" / "python"
+    if hermes_runtime_py.exists():
+        return str(hermes_runtime_py)
 
     # Local .venv inside this repo
     local_venv = REPO_ROOT / ".venv" / "bin" / "python"
@@ -348,6 +354,20 @@ def print_startup_config() -> None:
     warn = "\033[33m[!!]\033[0m"
     err = "\033[31m[XX]\033[0m"
 
+    # RM Workbench runtime alignment diagnostics
+    _tools_path = _toolsets_path = _rm_available = "?"
+    try:
+        import tools as _t_mod
+        _tools_path = getattr(_t_mod, "__file__", "unknown")
+    except ImportError:
+        _tools_path = "NOT IMPORTABLE"
+    try:
+        import toolsets as _ts_mod
+        _toolsets_path = getattr(_ts_mod, "__file__", "unknown")
+        _rm_available = _ts_mod.validate_toolset("rm_workbench")
+    except Exception:
+        _rm_available = False
+
     lines = [
         "",
         "  Hermes Web UI -- startup config",
@@ -359,6 +379,9 @@ def print_startup_config() -> None:
         f"  workspace   : {DEFAULT_WORKSPACE}",
         f"  host:port   : {HOST}:{PORT}",
         f"  config file : {_get_config_path()}  {'(found)' if _get_config_path().exists() else '(not found, using defaults)'}",
+        f"  tools module: {_tools_path}",
+        f"  toolsets    : {_toolsets_path}",
+        f"  rm_workbench: {'available' if _rm_available else 'NOT AVAILABLE'}  {ok if _rm_available else warn}",
         "",
     ]
     print("\n".join(lines), flush=True)
