@@ -481,6 +481,18 @@ except ImportError:
     get_clarify_pending = lambda *a, **k: None
     resolve_clarify = lambda *a, **k: 0
 
+# RM workbench pending interactions (optional -- graceful fallback if unavailable)
+try:
+    from api.pending_interactions import (
+        submit_pending as submit_rm_pending_interaction,
+        get_pending as get_rm_pending_interaction,
+        resolve_pending as resolve_rm_pending_interaction,
+    )
+except ImportError:
+    submit_rm_pending_interaction = lambda *a, **k: None
+    get_rm_pending_interaction = lambda *a, **k: None
+    resolve_rm_pending_interaction = lambda *a, **k: 0
+
 
 # ── Login page locale strings ─────────────────────────────────────────────────
 # Add entries here to support more languages on the login page.
@@ -1032,6 +1044,21 @@ def handle_get(handler, parsed) -> bool:
             return j(handler, {"error": "not found"}, status=404)
         return _handle_clarify_inject(handler, parsed)
 
+    if parsed.path == "/api/rm-workbench/mock-stream":
+        # Loopback-only: dev/test smoke stream, not a public runtime route.
+        if handler.client_address[0] != "127.0.0.1":
+            return j(handler, {"error": "not found"}, status=404)
+        return _handle_rm_workbench_mock_stream(handler)
+
+    if parsed.path == "/api/rm-workbench/pending":
+        return _handle_rm_workbench_pending(handler, parsed)
+
+    if parsed.path == "/api/rm-workbench/inject_test":
+        # Loopback-only: used by automated tests; blocked from any remote client
+        if handler.client_address[0] != "127.0.0.1":
+            return j(handler, {"error": "not found"}, status=404)
+        return _handle_rm_workbench_inject(handler, parsed)
+
     # ── Cron API (GET) ──
     if parsed.path == "/api/crons":
         from cron.jobs import list_jobs
@@ -1470,6 +1497,9 @@ def handle_post(handler, parsed) -> bool:
     # ── Clarify (POST) ──
     if parsed.path == "/api/clarify/respond":
         return _handle_clarify_respond(handler, body)
+
+    if parsed.path == "/api/rm-workbench/pending/resolve":
+        return _handle_rm_workbench_resolve(handler, body)
 
     # ── Skills (POST) ──
     if parsed.path == "/api/skills/save":
@@ -2355,6 +2385,76 @@ def _handle_clarify_inject(handler, parsed):
         )
         return j(handler, {"ok": True, "session_id": sid})
     return j(handler, {"error": "session_id required"}, status=400)
+
+
+def _handle_rm_workbench_mock_stream(handler):
+    """SSE stream of AG-UI events generated from the production RM adapter."""
+    try:
+        from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
+        from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+    except ImportError:
+        return bad(handler, "rm_workbench adapter not available")
+
+    contract = load_pre_meeting_brief_fixture()
+    events = map_rm_skill_contract_to_agui_events(contract)
+
+    handler.send_response(200)
+    handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
+    handler.send_header("Cache-Control", "no-cache")
+    handler.send_header("X-Accel-Buffering", "no")
+    _security_headers(handler)
+    handler.end_headers()
+
+    for event in events:
+        chunk = f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+        handler.wfile.write(chunk.encode("utf-8"))
+        handler.wfile.flush()
+
+    handler.wfile.write(b"data: [DONE]\n\n")
+    handler.wfile.flush()
+    handler.close_connection = True
+
+
+def _handle_rm_workbench_pending(handler, parsed):
+    sid = parse_qs(parsed.query).get("session_id", [""])[0]
+    if not sid:
+        return bad(handler, "session_id is required")
+    pending = get_rm_pending_interaction(sid)
+    if pending:
+        return j(handler, {"pending": pending})
+    return j(handler, {"pending": None})
+
+
+def _handle_rm_workbench_inject(handler, parsed):
+    """Inject a fake pending RM workbench interaction for local tests."""
+    qs = parse_qs(parsed.query)
+    sid = qs.get("session_id", [""])[0]
+    if not sid:
+        return bad(handler, "session_id is required")
+    interaction_id = qs.get("interaction_id", [f"pi_test_{uuid.uuid4().hex[:8]}"])[0]
+    submit_rm_pending_interaction(
+        sid,
+        {
+            "id": interaction_id,
+            "session_id": sid,
+            "kind": "pending_interaction",
+            "action": "select_products",
+            "blocking": True,
+            "title": "Select products for the RM brief",
+            "requested_at": time.time(),
+            "schema": {
+                "type": "object",
+                "required": ["selected_product_ids"],
+                "properties": {
+                    "selected_product_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                    }
+                },
+            },
+        },
+    )
+    return j(handler, {"ok": True, "session_id": sid})
 
 
 def _handle_live_models(handler, parsed):
@@ -3267,6 +3367,25 @@ def _handle_clarify_respond(handler, body):
         return bad(handler, "response is required")
     resolve_clarify(sid, response, resolve_all=False)
     return j(handler, {"ok": True, "response": response})
+
+
+def _handle_rm_workbench_resolve(handler, body):
+    sid = body.get("session_id", "")
+    if not sid:
+        return bad(handler, "session_id is required")
+    payload = body.get("payload")
+    if not isinstance(payload, dict):
+        return bad(handler, "payload must be an object")
+    interaction_id = body.get("interaction_id")
+    if not isinstance(interaction_id, str) or not interaction_id:
+        return bad(handler, "interaction_id is required and must be a non-empty string")
+    resolved = resolve_rm_pending_interaction(
+        sid,
+        payload,
+        resolve_all=bool(body.get("resolve_all")),
+        interaction_id=interaction_id,
+    )
+    return j(handler, {"ok": True, "resolved": resolved})
 
 
 def _handle_session_compress(handler, body):

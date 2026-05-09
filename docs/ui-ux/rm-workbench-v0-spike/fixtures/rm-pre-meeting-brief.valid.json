@@ -6,56 +6,56 @@
   "skill": "pre_meeting_brief",
   "customer": {
     "id": "cust_001",
-    "name": "Mock Customer",
+    "name": "模拟客户",
     "risk_level": "R3",
     "aum": 3200000,
-    "liquidity_need": "medium",
-    "investment_horizon": "12-24m"
+    "liquidity_need": "中等",
+    "investment_horizon": "12-24个月"
   },
   "memory_references": [
     {
       "id": "mem_001",
-      "type": "preference",
-      "summary": "Prefers lower drawdown products after a previous volatile fund experience."
+      "type": "偏好",
+      "summary": "经历过高波动基金后，更偏好回撤较低的产品。"
     },
     {
       "id": "mem_002",
-      "type": "relationship",
-      "summary": "Usually asks for spouse alignment before confirming allocation changes."
+      "type": "关系",
+      "summary": "确认配置调整前，通常需要先和配偶达成一致。"
     }
   ],
   "product_candidates": [
     {
       "id": "prod_001",
-      "name": "Stable Income Portfolio A",
-      "asset_class": "fixed_income_plus",
+      "name": "稳健收益组合 A",
+      "asset_class": "固收增强",
       "risk_level": "R2",
       "fit_score": 86,
       "reasons": [
-        "Matches lower drawdown preference",
-        "Compatible with medium liquidity need"
+        "匹配低回撤偏好",
+        "适配中等流动性需求"
       ]
     },
     {
       "id": "prod_002",
-      "name": "Balanced Allocation Portfolio B",
-      "asset_class": "multi_asset",
+      "name": "均衡配置组合 B",
+      "asset_class": "多资产",
       "risk_level": "R3",
       "fit_score": 81,
       "reasons": [
-        "Matches customer risk level",
-        "Improves diversification"
+        "匹配客户风险等级",
+        "有助于提升组合分散度"
       ]
     },
     {
       "id": "prod_003",
-      "name": "Cash Management Plus C",
-      "asset_class": "cash_management",
+      "name": "现金管理增强 C",
+      "asset_class": "现金管理",
       "risk_level": "R1",
       "fit_score": 73,
       "reasons": [
-        "Useful for near-term liquidity bucket",
-        "Can buffer portfolio volatility"
+        "适合作为短期流动性仓位",
+        "可缓冲组合波动"
       ]
     }
   ],
@@ -82,8 +82,8 @@
       "id": "surface_export_001",
       "surface": "BriefExportPanel",
       "props": {
-        "formats": ["markdown", "pdf_draft"],
-        "default_format": "markdown"
+        "formats": ["Markdown", "PDF 草稿"],
+        "default_format": "Markdown"
       }
     }
   ],
@@ -109,13 +109,109 @@
       }
     }
   ],
+  "ui": {
+    "blocks": [
+      {
+        "id": "metric_total_aum",
+        "type": "MetricCard",
+        "props": {
+          "label": "管理资产总额",
+          "value": "3,200,000",
+          "unit": "CNY",
+          "trend": "up",
+          "delta": "+5.2%"
+        }
+      },
+      {
+        "id": "allocation_table",
+        "type": "DataTable",
+        "props": {
+          "columns": [
+            {"key": "asset_class", "label": "资产类别"},
+            {"key": "ratio", "label": "配置比例"},
+            {"key": "amount", "label": "金额 (万)"}
+          ],
+          "rows": [
+            {"asset_class": "固收增强", "ratio": "40%", "amount": 128},
+            {"asset_class": "多资产", "ratio": "35%", "amount": 112},
+            {"asset_class": "现金管理", "ratio": "25%", "amount": 80}
+          ]
+        }
+      },
+      {
+        "id": "nav_line",
+        "type": "LineChart",
+        "props": {
+          "title": "组合净值走势",
+          "xKey": "date",
+          "series": [
+            {"key": "nav", "label": "组合净值", "color": "#1570ef"},
+            {"key": "benchmark", "label": "基准", "color": "#98a2b3"}
+          ],
+          "data": [
+            {"date": "2025-01", "nav": 1.00, "benchmark": 1.00},
+            {"date": "2025-04", "nav": 1.03, "benchmark": 1.01},
+            {"date": "2025-07", "nav": 1.05, "benchmark": 1.02},
+            {"date": "2025-10", "nav": 1.08, "benchmark": 1.04},
+            {"date": "2026-01", "nav": 1.12, "benchmark": 1.05}
+          ]
+        }
+      },
+      {
+        "id": "revenue_bar",
+        "type": "BarChart",
+        "props": {
+          "title": "季度收益贡献",
+          "xKey": "quarter",
+          "series": [
+            {"key": "fixed_income", "label": "固收", "color": "#067647"},
+            {"key": "multi_asset", "label": "多资产", "color": "#1570ef"},
+            {"key": "cash", "label": "现金", "color": "#b54708"}
+          ],
+          "data": [
+            {"quarter": "Q1", "fixed_income": 12000, "multi_asset": 8000, "cash": 3000},
+            {"quarter": "Q2", "fixed_income": 15000, "multi_asset": 10000, "cash": 3500},
+            {"quarter": "Q3", "fixed_income": 13000, "multi_asset": 11000, "cash": 4000},
+            {"quarter": "Q4", "fixed_income": 16000, "multi_asset": 12000, "cash": 4500}
+          ]
+        }
+      },
+      {
+        "id": "allocation_pie",
+        "type": "PieChart",
+        "props": {
+          "title": "资产配置分布",
+          "labelKey": "category",
+          "valueKey": "amount",
+          "data": [
+            {"category": "固收增强", "amount": 128},
+            {"category": "多资产", "amount": 112},
+            {"category": "现金管理", "amount": 80}
+          ]
+        }
+      },
+      {
+        "id": "choice_products",
+        "type": "ChoiceList",
+        "props": {
+          "title": "推荐操作",
+          "multiple": false,
+          "options": [
+            {"id": "opt_rebalance", "label": "执行再平衡", "description": "按目标配置比例调整持仓"},
+            {"id": "opt_add", "label": "追加配置", "description": "增加固收增强仓位"},
+            {"id": "opt_hold", "label": "维持现状", "description": "当前配置符合预期，暂不调整"}
+          ]
+        }
+      }
+    ]
+  },
   "brief": {
-    "title": "Pre-meeting brief for Mock Customer",
-    "summary": "Focus the meeting on suitability, liquidity bucket, and spouse-aligned decision flow.",
+    "title": "模拟客户会前简报",
+    "summary": "本次沟通重点关注适当性、流动性仓位，以及需与配偶确认的决策流程。",
     "talking_points": [
-      "Start with risk comfort and previous volatility experience.",
-      "Frame product candidates as allocation roles, not isolated products.",
-      "Confirm whether spouse alignment is needed before moving forward."
+      "先确认客户对风险和此前波动体验的真实感受。",
+      "把候选产品放在整体配置角色中解释，不孤立推单。",
+      "推进前确认是否需要客户先与配偶沟通一致。"
     ]
   }
 }
