@@ -2391,12 +2391,12 @@ def _handle_rm_workbench_mock_stream(handler):
     """SSE stream of AG-UI events generated from the production RM adapter."""
     try:
         from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
-        from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+        from api.rm_workbench.adapter import map_contract_to_agui_events
     except ImportError:
-        return bad(handler, "rm_workbench adapter not available")
+        return bad(handler, "structured UI adapter not available")
 
     contract = load_pre_meeting_brief_fixture()
-    events = map_rm_skill_contract_to_agui_events(contract)
+    events = map_contract_to_agui_events(contract)
 
     handler.send_response(200)
     handler.send_header("Content-Type", "text/event-stream; charset=utf-8")

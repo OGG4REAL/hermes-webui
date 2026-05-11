@@ -6,11 +6,11 @@ from __future__ import annotations
 def test_maps_fixture_to_agui_standard_event_types():
     from api.rm_workbench.adapter import (
         AG_UI_STANDARD_EVENT_TYPES,
-        map_rm_skill_contract_to_agui_events,
+        map_contract_to_agui_events,
     )
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
-    events = map_rm_skill_contract_to_agui_events(load_pre_meeting_brief_fixture())
+    events = map_contract_to_agui_events(load_pre_meeting_brief_fixture())
 
     assert events
     assert {event["type"] for event in events} <= AG_UI_STANDARD_EVENT_TYPES
@@ -18,10 +18,10 @@ def test_maps_fixture_to_agui_standard_event_types():
 
 
 def test_surfaces_are_carried_as_custom_a2ui_messages():
-    from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+    from api.rm_workbench.adapter import map_contract_to_agui_events
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
-    events = map_rm_skill_contract_to_agui_events(load_pre_meeting_brief_fixture())
+    events = map_contract_to_agui_events(load_pre_meeting_brief_fixture())
     surface_events = [
         event for event in events
         if event["type"] == "CUSTOM" and event["name"] == "a2ui.surface.messages"
@@ -37,10 +37,10 @@ def test_surfaces_are_carried_as_custom_a2ui_messages():
 
 
 def test_pending_interaction_is_custom_plus_state_delta():
-    from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+    from api.rm_workbench.adapter import map_contract_to_agui_events
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
-    events = map_rm_skill_contract_to_agui_events(load_pre_meeting_brief_fixture())
+    events = map_contract_to_agui_events(load_pre_meeting_brief_fixture())
 
     assert any(
         event["type"] == "CUSTOM"
@@ -60,22 +60,22 @@ def test_validate_agui_event_types_rejects_non_standard():
 
 def test_validate_agui_event_types_accepts_standard():
     from api.rm_workbench.adapter import (
-        map_rm_skill_contract_to_agui_events,
+        map_contract_to_agui_events,
         validate_agui_event_types,
     )
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
-    events = map_rm_skill_contract_to_agui_events(load_pre_meeting_brief_fixture())
+    events = map_contract_to_agui_events(load_pre_meeting_brief_fixture())
     validate_agui_event_types(events)
 
 
-def test_map_surface_to_a2ui_messages():
-    from api.rm_workbench.adapter import map_surface_to_a2ui_messages
+def test_map_rm_surface_to_a2ui_messages():
+    from api.rm_workbench.adapter import map_rm_surface_to_a2ui_messages
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
     contract = load_pre_meeting_brief_fixture()
     surface = contract["surfaces"][0]
-    messages = map_surface_to_a2ui_messages(contract, surface)
+    messages = map_rm_surface_to_a2ui_messages(contract, surface)
 
     assert len(messages) == 3
     assert "createSurface" in messages[0]
@@ -84,14 +84,14 @@ def test_map_surface_to_a2ui_messages():
 
 
 def test_product_fit_table_action_uses_contract_pending_interaction_id():
-    from api.rm_workbench.adapter import map_surface_to_a2ui_messages
+    from api.rm_workbench.adapter import map_rm_surface_to_a2ui_messages
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
     contract = load_pre_meeting_brief_fixture()
     contract["pending_interactions"][0]["id"] = "pi_custom"
     surface = contract["surfaces"][1]
 
-    messages = map_surface_to_a2ui_messages(contract, surface)
+    messages = map_rm_surface_to_a2ui_messages(contract, surface)
     components = messages[1]["updateComponents"]["components"]
     button = next(component for component in components if component["component"] == "Button")
 
@@ -99,10 +99,10 @@ def test_product_fit_table_action_uses_contract_pending_interaction_id():
 
 
 def test_generic_blocks_produce_a2ui_surface_messages():
-    from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+    from api.rm_workbench.adapter import map_contract_to_agui_events
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
-    events = map_rm_skill_contract_to_agui_events(load_pre_meeting_brief_fixture())
+    events = map_contract_to_agui_events(load_pre_meeting_brief_fixture())
     surface_events = [
         event for event in events
         if event["type"] == "CUSTOM" and event["name"] == "a2ui.surface.messages"
@@ -137,10 +137,10 @@ def test_generic_block_a2ui_messages_have_correct_structure():
 
 
 def test_generic_blocks_do_not_break_existing_surfaces():
-    from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+    from api.rm_workbench.adapter import map_contract_to_agui_events
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
-    events = map_rm_skill_contract_to_agui_events(load_pre_meeting_brief_fixture())
+    events = map_contract_to_agui_events(load_pre_meeting_brief_fixture())
     surface_events = [
         event for event in events
         if event["type"] == "CUSTOM" and event["name"] == "a2ui.surface.messages"
@@ -155,12 +155,12 @@ def test_generic_blocks_do_not_break_existing_surfaces():
 
 
 def test_contract_without_ui_blocks_still_valid():
-    from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+    from api.rm_workbench.adapter import map_contract_to_agui_events
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
     contract = load_pre_meeting_brief_fixture()
     contract.pop("ui", None)
-    events = map_rm_skill_contract_to_agui_events(contract)
+    events = map_contract_to_agui_events(contract)
 
     surface_events = [
         event for event in events
@@ -180,22 +180,26 @@ def test_contract_validation_rejects_unknown_block_type():
         validate_contract(contract)
 
 
-def test_contract_validation_rejects_chart_without_data():
+def test_contract_validation_accepts_chart_with_incomplete_props():
+    """Per ADR-010, Layer 0 validator is best-effort: per-type field strictness
+    (chart series.key matching data row keys, empty data arrays, etc.) is the
+    primitive's responsibility on the frontend, not the validator's. A chart
+    block with empty data must validate successfully so that the frontend can
+    render a clear empty-state placeholder.
+    """
     from api.rm_workbench.contracts import validate_contract
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
-    import pytest
 
     contract = load_pre_meeting_brief_fixture()
     contract["ui"] = {"blocks": [{"id": "lc", "type": "LineChart", "props": {"xKey": "x", "series": [{"key": "y"}], "data": []}}]}
-    with pytest.raises(ValueError, match="non-empty array"):
-        validate_contract(contract)
+    validate_contract(contract)  # should not raise
 
 
 def test_semantic_surface_data_models_include_chinese_demo_payloads():
-    from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+    from api.rm_workbench.adapter import map_contract_to_agui_events
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
 
-    events = map_rm_skill_contract_to_agui_events(load_pre_meeting_brief_fixture())
+    events = map_contract_to_agui_events(load_pre_meeting_brief_fixture())
     surfaces = {
         event["value"]["surface"]: event["value"]["messages"][2]["updateDataModel"]["data"]
         for event in events

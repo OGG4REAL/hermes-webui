@@ -825,15 +825,27 @@ function attachLiveStream(activeSid, streamId, uploaded=[], options={}){
     });
 
     source.addEventListener('rm_workbench',e=>{
-      if(!S.session||S.session.session_id!==activeSid) return;
+      console.log('[rm_workbench] SSE event received, data length=', e.data?.length);
+      if(!S.session||S.session.session_id!==activeSid){
+        console.warn('[rm_workbench] session mismatch, dropping event');
+        return;
+      }
       try{
         const d=JSON.parse(e.data);
+        console.log('[rm_workbench] parsed payload, kind=', d.kind, 'events=', d.events?.length);
         if(d.kind==='agui_events'&&Array.isArray(d.events)){
           if(typeof window.__rmWorkbenchEvent==='function'){
+            console.log('[rm_workbench] dispatching to island via __rmWorkbenchEvent');
             window.__rmWorkbenchEvent(e.data);
+          }else{
+            console.log('[rm_workbench] island not mounted yet, queueing');
+            if(!window.__rmWorkbenchEventQueue) window.__rmWorkbenchEventQueue=[];
+            if(window.__rmWorkbenchEventQueue.length<64) window.__rmWorkbenchEventQueue.push(e.data);
           }
         }
-      }catch(_){}
+      }catch(_){
+        console.error('[rm_workbench] failed to parse SSE data', _);
+      }
     });
 
     source.addEventListener('metering',e=>{

@@ -1,15 +1,73 @@
-# RM Workbench V0 Issue 7 Foundation Status
+# Structured UI Subsystem Issue 7 Foundation Status (formerly "RM Workbench V0 Issue 7 Foundation Status")
 
 路径：`docs/ui-ux/rm-workbench-v0-issue7-foundation-status.md`
-状态：`active / planning input`
-更新时间：`2026-05-08`
+状态：`active / acceptance closeout input (realigned 2026-05-09)`
+更新时间：`2026-05-09`
 入口：`docs/ui-ux/rm-workbench-v0-index.md`
+受约束于：`docs/ui-ux/rm-workbench-v0-adr.md`（特别是 ADR-009 ~ ADR-013）
+
+---
+
+## -1. 2026-05-09 方向校准（必读）
+
+本文档下面 § 0 ~ § 5 的原文写于 Issue 7.7（MYM-38）启动前，此后 Codex 在 5 轮迭代中
+均无法通过真实 WebUI smoke。最终从服务器日志找到的根因不是任何一行代码，而是
+**早期 ADR 没有把 "AI 生成 UI 是 Hermes 工作台的原子能力" 和 "RM Workbench 是它的
+第一个 consumer" 清晰分层**。
+
+### Codex 5 轮迭代记录（MYM-38）
+
+| 轮次 | Codex 修复 | 暴露的下一层问题 |
+|---|---|---|
+| 1 | 加 contract schema 内层 properties（修 schema 剥参数） | validator 只接受 `rm.pre_meeting_brief` |
+| 2 | validator 拆双路接受 `rm_workbench` kind | adapter 在 generic 路径上 KeyError |
+| 3 | adapter 用 `.get(..., [])` 兼容 generic | `_validate_ui_blocks` 块级 schema 严格 |
+| 4 | embedded mode 加 error banner 显示 RUN_ERROR | BarChart 缺 series 仍直接 RUN_ERROR，前端零渲染 |
+| 5 | (未跑完即被叫停) | — |
+
+每轮只能修症状，下一轮在新位置暴露同类问题。证据集中点：
+[`~/.hermes/logs/errors.log`](~/.hermes/logs/errors.log) 的 `2026-05-09 15:55:08` 记录显示
+`BarChart 'chart_1' props.series must be a non-empty array`——这是 validator 严格度问题，
+不是模型构造能力问题。
+
+### 真实根因
+
+- **Layer 0 validator 把"渲染要求"和"业务合规要求"等价**：缺 `series` 抛 ValueError，
+  整轮对话视觉一片空白。这违背了"AI 生成 UI 应该宽容兜底"的产品直觉。
+- **Layer 0 contract 把 `kind` 当业务路由器**（`ALLOWED_KINDS = {"rm_workbench", "rm.pre_meeting_brief"}`），
+  必填 `run_id`/`thread_id`/`skill`——所有这些把通用底座绑死在 RM 命名空间。
+- **Layer 0 命名层全部 RM 化**：tool 名、SSE event、CUSTOM 名、前端 host、DOM、CSS。
+- **coding-boundary 文档把 RM 化硬约束作为"不许 relitigate 的 upstream decision"**，
+  Codex 每轮被边界绑死，只能修代码不能动 framing。
+
+### 校准动作（2026-05-09）
+
+- 新增 ADR-009 ~ ADR-013（原子能力定位 / best-effort 渲染 / 信封最小化 / `emit_ui` 重命名 /
+  Skill-driven Layer 1 迁移）
+- 修订 ADR-007 验收口径：Issue 7.7 退出标准从"完整 RM brief 渲染"降级为
+  "Layer 0 渲染至少 1 个 generic primitive"
+- 修订 coding-boundary § 4.2 / § 0.1（删 RM 化硬约束、加 ADR 优先锚点）
+- roadmap 重排 Issue 序列：Issue 8 后插入 Issue 9（Skill-driven Layer 1 migration）
+  和 Issue 10（命名整改）
+- 决定**停止把 7.7 交给 Codex 做**，由人类直接在 VSCode 里完成重构，避免 agent 在
+  窄边界内反复修症状
+
+### 给读者的指引
+
+- 下面 § 0 ~ § 5 是 2026-05-09 之前的快照，**作为历史保留**，能帮助理解当时的思考。
+- 但具体的 acceptance criteria、validator 严格度、tool 命名、Layer 1 处理方式，
+  **以 ADR / coding-boundary / roadmap 当前版本为准**。
+- 如果你是后续 agent 准备做 7.7 收口或 Issue 8 / 9 / 10：直接跳到 ADR-009 ~ ADR-013 和
+  roadmap § 6，不要从下面 § 0 倒推 acceptance。
 
 ---
 
 ## 0. 一句话结论
 
-Issue 7 到目前为止，已经把 **协议、bridge、runtime alignment、generic renderer catalog、真实 stream 可见性问题** 基本摸清。
+> （以下为 2026-05-09 之前的原文，保留作历史。结论本身仍部分成立，
+> 但具体下一步由上面 § -1 的校准动作覆盖。）
+
+Issue 7 到目前为止，已经把 **协议、bridge、runtime alignment、generic renderer catalog、真实 stream 可见性问题** 基本摸清；Issue 7.6 现在可以按已验收能力收口。
 
 但有一个非常重要的产品化结论现在已经明确：
 
@@ -19,10 +77,10 @@ RM Workbench React renderer / mock path 已经成立
 当前主 WebUI chat 前端已经适合作为第一条真实 RM workflow 的正式宿主
 ```
 
-在进入 Issue 8 之前，除了 Issue 7.6 generic catalog，本项目还需要补一层：
+在进入 Issue 8 之前，当前下一步已经收敛成：
 
 ```text
-React frontend foundation for the real WebUI path
+Issue 7.7: React frontend foundation for the real WebUI path
 ```
 
 否则后续真实 RM Skill workflow 会把：
@@ -102,6 +160,13 @@ rm_workbench SSE
 并验证了：
 
 - `ProductFitTable` 选择后仍可 resolve pending interaction
+- `MYM-35` 的截图与 SSE 证据仍有效，可继续作为 7.6 closeout 证据：
+  - `.playwright-cli/mym35-generic-a2ui-catalog.png`
+  - `.playwright-cli/mym35-productfit-resolved.png`
+- 当前树在 2026-05-09 再次通过：
+  - `tests/test_rm_workbench_adapter.py tests/test_rm_workbench_mock_stream.py`
+  - `tests/test_rm_workbench_real_stream_bridge.py`
+  - `frontend/npm run build`
 
 ---
 
@@ -218,18 +283,19 @@ RM Workbench 这条线，React 化不是可选优化，而是基建的一部分
 
 ## 4. 建议给编排器的下一步顺序
 
-### 4.1 先做 Issue 7.6
+### 4.1 Issue 7.6 已可以关闭
 
-继续保持已定方向：
+当前 closeout 结论：
 
 ```text
-Generic A2UI Renderer Catalog
+Generic A2UI Renderer Catalog 已在 React workbench host / mock path 成立，并且不应再扩成新的 runtime 或 frontend host 实现 issue。
 ```
 
-因为它确认的是：
+本次收口保留的验收口径：
 
 - 同一条 `rm_workbench_emit_contract` 链路能承载 generic UI blocks
 - React renderer catalog 的边界清晰
+- 主 WebUI chat 还不是正式 structured-UI 宿主，这件事留给 Issue 7.7
 
 ### 4.2 然后插入新的 Issue 7.x：React Frontend Foundation
 
@@ -267,6 +333,12 @@ First Real Pre-Meeting Brief Workflow
 - 用户交互闭环
 
 而不是顺手再 debug 主前端宿主。
+
+Issue 8 的用户侧进入条件应该写得更直白：
+
+```text
+只有当用户在真实 WebUI chat 里和 Hermes 对话时，Hermes 能直接在对话体验里渲染图表 / 表格 / 选择 UI，Issue 8 才能开始。
+```
 
 ---
 
@@ -321,7 +393,7 @@ Issue 7 到现在，协议/bridge/runtime/generic renderer 基本成立。
 
 ```text
 Issue 7.6
-  -> Generic A2UI Renderer Catalog
+  -> accepted / closed: Generic A2UI Renderer Catalog
 
 Issue 7.7（建议新增）
   -> React Frontend Foundation for real WebUI path

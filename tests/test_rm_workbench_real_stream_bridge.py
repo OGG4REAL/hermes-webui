@@ -1,7 +1,7 @@
 """Tests for RM Workbench V0 Real Stream Bridge (MYM-29).
 
 Covers:
-1. emit tool detection: only rm_workbench_emit_contract triggers adapter
+1. emit tool detection: only emit_ui triggers adapter
 2. rm_workbench SSE event: adapter events through put()
 3. pending interaction resolve by interaction_id
 4. blocking wait + timeout + cancel
@@ -28,7 +28,7 @@ try:
         extract_contract,
         process_emit_tool,
     )
-    from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+    from api.rm_workbench.adapter import map_contract_to_agui_events
     from api.rm_workbench.contracts import validate_contract
     from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
     from api.pending_interactions import (
@@ -70,7 +70,7 @@ def _make_fixture_with_memory_proposals():
 
 class TestEmitToolDetection:
     def test_emit_tool_name_constant(self):
-        assert EMIT_TOOL_NAME == "rm_workbench_emit_contract"
+        assert EMIT_TOOL_NAME == "emit_ui"
 
     def test_extract_contract_from_args(self):
         fixture = load_pre_meeting_brief_fixture()
@@ -98,7 +98,7 @@ class TestEmitToolDetection:
 
     def test_only_emit_tool_name_triggers_processing(self):
         """Other tool names should NOT be processed by emit_tool."""
-        assert EMIT_TOOL_NAME == "rm_workbench_emit_contract"
+        assert EMIT_TOOL_NAME == "emit_ui"
         assert EMIT_TOOL_NAME != "some_other_tool"
         assert EMIT_TOOL_NAME != "clarify"
 
@@ -141,7 +141,7 @@ class TestEmitToolDetection:
 class TestRmWorkbenchSSEEvent:
     def test_adapter_generates_agui_events(self):
         fixture = load_pre_meeting_brief_fixture()
-        events = map_rm_skill_contract_to_agui_events(fixture)
+        events = map_contract_to_agui_events(fixture)
         assert len(events) > 0
         types = {e["type"] for e in events}
         assert "RUN_STARTED" in types
@@ -285,7 +285,7 @@ class TestStreamCancelClearsPending:
 class TestMemoryProposals:
     def test_adapter_generates_memory_proposal_custom_event(self):
         fixture = _make_fixture_with_memory_proposals()
-        events = map_rm_skill_contract_to_agui_events(fixture)
+        events = map_contract_to_agui_events(fixture)
 
         mp_events = [
             e for e in events
@@ -299,7 +299,7 @@ class TestMemoryProposals:
     def test_memory_proposals_optional_default_empty(self):
         fixture = load_pre_meeting_brief_fixture()
         assert "memory_proposals" not in fixture
-        events = map_rm_skill_contract_to_agui_events(fixture)
+        events = map_contract_to_agui_events(fixture)
         mp_events = [
             e for e in events
             if e["type"] == "CUSTOM" and e.get("name") == "rm.memory_proposal.created"

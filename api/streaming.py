@@ -1145,34 +1145,37 @@ def _append_rm_workbench_toolset_if_supported(toolsets: list) -> list:
 
 
 def _handle_rm_emit_tool(tool_args, session_id, cancel_event, put):
-    """Process an rm_workbench_emit_contract tool completion.
+    """Process an emit_ui tool completion.
 
-    Validates the contract, maps to AG-UI events, and emits them via SSE.
-    Does NOT block — blocking wait belongs in the tool execution layer
-    (Hermes Agent runtime), not in this fire-and-forget callback.
+    Validates the contract (Layer 0 minimal validation, ADR-010/011), maps to
+    AG-UI events, and emits them via SSE. Does NOT block — blocking wait
+    belongs in the tool execution layer (Hermes Agent runtime), not in this
+    fire-and-forget callback.
+
+    SSE event name remains ``rm_workbench`` (deprecation queue, ADR-012).
     """
     try:
         from api.rm_workbench.emit_tool import process_emit_tool
     except ImportError:
-        logger.debug("RM workbench modules not available")
+        logger.debug("Structured UI modules not available")
         put('rm_workbench', {
             'kind': 'agui_events',
-            'events': [{'type': 'RUN_ERROR', 'message': 'RM workbench modules not available on this server'}],
+            'events': [{'type': 'RUN_ERROR', 'message': 'Structured UI modules not available on this server'}],
         })
         return
 
     try:
         events, _summary = process_emit_tool(tool_args)
     except (ValueError, Exception) as exc:
-        logger.warning("rm_workbench_emit_contract failed: %s", exc)
+        logger.warning("emit_ui failed: %s", exc)
         put('rm_workbench', {
             'kind': 'agui_events',
-            'events': [{'type': 'RUN_ERROR', 'message': f'rm_workbench_emit_contract failed: {exc}'}],
+            'events': [{'type': 'RUN_ERROR', 'message': f'emit_ui failed: {exc}'}],
         })
         return
 
     if cancel_event.is_set():
-        logger.debug("rm_workbench_emit_contract: cancelled, dropping %d events", len(events))
+        logger.debug("emit_ui: cancelled, dropping %d events", len(events))
         return
 
     put('rm_workbench', {'kind': 'agui_events', 'events': events})
@@ -1528,7 +1531,7 @@ def _run_agent_streaming(session_id, msg_text, model, workspace, stream_id, atta
                         'is_error': bool(cb_kwargs.get('is_error', False)),
                     })
 
-                    if name == 'rm_workbench_emit_contract':
+                    if name == 'emit_ui':
                         _handle_rm_emit_tool(completed_args, session_id, cancel_event, put)
 
                     return

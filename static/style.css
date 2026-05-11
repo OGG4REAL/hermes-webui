@@ -2337,3 +2337,9 @@ main.main > .main-view:not([id="mainChat"]):not([id="mainSettings"]) .main-view-
   .queue-pill:hover{background:color-mix(in srgb,var(--hover-bg) 60%,var(--surface));}
   .queue-pill-count{color:var(--text);}
   .queue-pill-chevron{margin-left:auto;opacity:.5;}
+
+
+/* RM Workbench island – embedded in chat message column */
+.rm-workbench-island{max-width:var(--msg-max,800px);margin:0 auto;width:100%;padding:0 24px;box-sizing:border-box;}
+.rm-workbench-island[hidden]{display:none;}
+@media(max-width:600px){.rm-workbench-island{padding:0 12px;}}

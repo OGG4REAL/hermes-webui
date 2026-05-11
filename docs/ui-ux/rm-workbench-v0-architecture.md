@@ -1,15 +1,16 @@
-# RM Workbench V0 Architecture
+# Structured UI Subsystem Architecture (formerly "RM Workbench V0 Architecture")
 
 路径：`docs/ui-ux/rm-workbench-v0-architecture.md`
-状态：`active / canonical architecture`
+状态：`active / canonical architecture (realigned 2026-05-09)`
 更新时间：`2026-05-09`
 入口：`docs/ui-ux/rm-workbench-v0-index.md`
+受约束于：`docs/ui-ux/rm-workbench-v0-adr.md`（ADR 与本文档冲突时以 ADR 为准）
 
 ---
 
 ## 0. 这份文档负责什么
 
-这份文档只维护 RM Workbench V0 的当前架构事实。
+这份文档只维护 Hermes WebUI 结构化 UI 子系统（即原 "RM Workbench V0"）的当前架构事实。
 
 它回答：
 
@@ -39,18 +40,38 @@
 Hermes Agent runtime
   -> hermes-webui backend as source of truth
   -> /api/chat/stream existing SSE rail
-  -> event: rm_workbench
+  -> event: rm_workbench  (命名包袱，机制是 Layer 0 通用通道)
   -> AG-UI CUSTOM carries A2UI messages
   -> React structured-UI host
   -> pending interaction resolve returns structured user input
 ```
 
-V0 的目标不是让模型生成任意前端代码，而是让模型通过结构化参数选择 catalog item。
+子系统目标：让模型在对话中通过 structured tool args 选 catalog primitive 并填 props，
+**而不是**让模型生成任意前端代码。
 
 ```text
-Agent chooses catalog item + fills props
-  -> frontend renders known component
+Agent chooses catalog primitive + fills props
+  -> frontend renders known component (best-effort)
 ```
+
+### 1.1 Layer 分层（2026-05-09 校准）
+
+```text
+Layer 0  Generative UI atomic capability （工作台底座）
+  - primitive catalog: MetricCard / DataTable / LineChart / BarChart / PieChart / ChoiceList
+  - contract envelope: emit_ui tool
+  - interaction protocol: pending_interaction.resolve
+  - 不依赖任何业务 consumer 的形状要求
+
+Layer 1  Business consumer
+  - RM Workbench 是第一个 consumer，不是所有者
+  - 业务的"约定 / 预设 / 字段命名"应以 Skill 形式存在（ADR-013）
+  - 不应该硬编码新的 React surface 或新的后端分支
+  - 当前过渡态：仍保留 frontend/src/rm/surfaces/ 与对应后端 RM 分支，
+    标记为 transitional，由 Skill-driven Layer 1 migration issue 收口
+```
+
+详见 ADR-009 ~ ADR-013。
 
 ---
 
@@ -65,21 +86,17 @@ Agent chooses catalog item + fills props
 - Skill instruction loading
 - runtime memory / approval / clarify 等既有能力
 
-V0 不改 Hermes 主 runtime loop。
+不改 Hermes 主 runtime loop。
 
-Hermes Agent 只需要暴露一个结构化 UI emit tool：
-
-```text
-rm_workbench_emit_contract
-```
-
-中期可以泛化为：
+Hermes Agent 只暴露一个 Layer 0 结构化 UI emit tool（ADR-012）：
 
 ```text
-emit_ui_contract
+emit_ui
 ```
 
-但 V0 不新增 `render_table`、`render_chart`、`render_form` 这类分散工具。
+> 历史名 `rm_workbench_emit_contract` 已物理重命名为 `emit_ui`，不保留兼容别名。
+
+不新增 `render_table` / `render_chart` / `render_form` / `render_card` 等 per-component 工具（ADR-009）。
 
 ### 2.2 hermes-webui backend
 
@@ -87,18 +104,25 @@ emit_ui_contract
 
 - 继续作为 session / SSE / tool lifecycle / pending interaction 的事实源。
 - 保留 `/api/chat/stream` top-level SSE protocol。
-- 在真实 stream 中识别 `rm_workbench_emit_contract` tool completion。
-- 把 tool contract 转成 `event: rm_workbench`。
-- 维护 pending interaction resolve API。
+- 在真实 stream 中识别 `emit_ui` tool completion，把 contract 转成 `event: rm_workbench`。
+- 维护 pending interaction resolve API（Layer 0 通用机制）。
 
 关键边界：
 
 ```text
-backend adapter maps contract
-frontend renderer renders known catalog
+backend adapter maps contract (Layer 0 only)
+frontend primitive renders known catalog (best-effort)
 ```
 
 backend 不从 assistant text 猜 UI。
+
+Layer 0 validator（`api/rm_workbench/contracts.py`）只校验最小可识别性：
+block 必须有 id / type / props，type 在 catalog allowlist 内。
+per-type 字段缺失（chart series / table columns / choice options）由 primitive
+在前端兜底，不在后端抛 ValueError（ADR-010）。
+
+业务级 schema 严格性（如 RM 要求 customer / product_candidates 必须存在）由
+RM Skill 自己负责，不下沉到 Layer 0 validator。
 
 ### 2.3 React structured-UI host
 
@@ -183,9 +207,10 @@ Pending interaction 是 Hermes WebUI 的独立抽象，不能塞进 clarify。
 
 ## 4. UI Catalog
 
-### 4.1 Generic UI primitives
+### 4.1 Layer 0 — Generic UI primitives（工作台 UI 词汇表）
 
-Generic primitives 是所有 Agent UI 场景复用的底座。
+Generic primitives 是所有 consumer 复用的 Layer 0 底座，是工作台的 UI 词汇表。
+扩充 catalog = 工作台原子能力扩张，每次都是独立的有价值 issue。
 
 V0 allowlist：
 
@@ -196,20 +221,24 @@ V0 allowlist：
 - `PieChart`
 - `ChoiceList`
 
-这些不是 RM 语义组件。
+这些不是 RM 语义组件。它们必须能从 mock fixture、inject endpoint、真实模型 emit
+三种来源共同驱动；必填 props 缺失时显示空状态/警告，不抛运行时异常（ADR-010）。
 
-### 4.2 RM semantic surfaces
+### 4.2 Layer 1 — Business surfaces（过渡态保留，目标态废弃）
 
-RM semantic surfaces 是业务组件。
+业务 surface 在目标态下不应该以 React 组件形式存在，而应该以 Skill prompt 资产
+形式存在——Skill 教模型如何用 Layer 0 primitive 组合出业务语义（ADR-013）。
 
-当前 V0 重点：
+**当前过渡态**保留以下 React 组件，将由 Skill-driven Layer 1 migration issue 一次性
+迁移并删除：
 
-- `CustomerProfileCard`
-- `ProductFitTable`
-- `BriefExportPanel`
-- `MemoryDiffCard`
+- `frontend/src/rm/surfaces/CustomerProfileCard`（≈ 多个 MetricCard）
+- `frontend/src/rm/surfaces/ProductFitTable`（≈ DataTable + ChoiceList + interaction）
+- `frontend/src/rm/surfaces/BriefExportPanel`（≈ Card + 标题文本）
+- `frontend/src/rm/surfaces/MemoryDiffCard`（待评估是否能由 DataTable 表达）
 
-RM semantic surface 可以组合 generic primitives，也可以附带 RM-specific interaction semantics。
+**禁止**为新业务 consumer（CFA / 投资 / 日常 UI 生成）新建 `frontend/src/<domain>/surfaces/`
+目录或对应后端分支。新业务通过 Skill 教模型用 Layer 0 primitive 表达。
 
 ---
 
@@ -217,17 +246,21 @@ RM semantic surface 可以组合 generic primitives，也可以附带 RM-specifi
 
 已成立：
 
-- Hermes Agent 能暴露 `rm_workbench_emit_contract`。
+- Hermes Agent 能暴露 emit tool（命名重整后为 `emit_ui`）。
 - WebUI backend 能在真实 stream bridge 中识别该 tool。
 - runtime path 已通过 editable install 对齐到 `/Users/hywl/hermes-agent`。
 - generic renderer catalog 已在 React workbench / mock path 中证明可渲染 table / chart / choice primitives。
+- React structured-UI island 已 mount 进主 WebUI chat path（MYM-38 完成 host wiring）。
 
-未成立：
+未成立 / 进行中（2026-05-09 校准后）：
 
-- 主 WebUI chat path 还没有正式 React structured-UI host。
-- 日常对话中一句话自然生成 UI 还不稳定。
-- provider/model 对 deep nested object tool args 的稳定性仍需隔离验证。
-- 第一条真实 RM workflow 尚未实现。
+- Layer 0 validator 仍是 RM-strict 状态（per-type 字段硬校验、kind 白名单、必填 metadata），
+  本轮重构会放宽到最小校验。
+- Layer 0 contract 信封仍包含 RM-only 必填字段（run_id / thread_id / skill），本轮改为可选+后端补默认。
+- Layer 1 RM 业务字段（customer / product_candidates 等）目前在 `adapter.py` 通用路径上硬编码，
+  本轮重构会把 RM 分支标记 transitional，由 Skill-driven Layer 1 migration issue 最终迁出。
+- 主 WebUI chat path 渲染 generic primitive 的真实端到端 smoke 仍未完成（被 validator 严格度阻塞）。
+- 第一条真实 RM workflow 尚未实现（Issue 8）。
 
 ---
 
@@ -240,3 +273,9 @@ RM semantic surface 可以组合 generic primitives，也可以附带 RM-specifi
 - 不为每种 UI primitive 新增独立 Hermes tool。
 - Memory proposal-first，不自动写入。
 - runtime / streaming / frontend host 相关 issue 必须有真实 WebUI smoke 证据。
+- **Layer 0 路径不访问任何 Layer 1 业务字段**（`contract["customer"]` 等）。
+  业务字段访问只能在 Layer 1 surface 渲染分支或 Skill 校验中出现（ADR-009 / ADR-013）。
+- **Layer 0 validator 不抛 per-type 严格校验错误**。缺字段由 primitive 在前端兜底（ADR-010）。
+- **Layer 0 contract 不做 kind 白名单路由**。kind/run_id/thread_id/skill 都可选（ADR-011）。
+- **新业务 consumer 不写新代码**。先尝试用 Skill + Layer 0 primitive 表达，
+  无法表达时独立提案扩充 Layer 0 catalog（ADR-013）。

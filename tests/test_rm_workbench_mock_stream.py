@@ -61,9 +61,9 @@ class TestRMWorkbenchMockStream:
 
     def test_event_order_matches_adapter(self):
         from api.rm_workbench.mock_data import load_pre_meeting_brief_fixture
-        from api.rm_workbench.adapter import map_rm_skill_contract_to_agui_events
+        from api.rm_workbench.adapter import map_contract_to_agui_events
 
-        expected = map_rm_skill_contract_to_agui_events(load_pre_meeting_brief_fixture())
+        expected = map_contract_to_agui_events(load_pre_meeting_brief_fixture())
         actual = _read_sse_events("/api/rm-workbench/mock-stream")
         assert len(actual) == len(expected)
         for a, e in zip(actual, expected):

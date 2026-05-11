@@ -1,6 +1,14 @@
 import { useState } from "react";
 
-interface Option {
+interface OptionInput {
+  // Accept either id or value as identifier (best-effort, ADR-010).
+  id?: string;
+  value?: string;
+  label?: string;
+  description?: string;
+}
+
+interface NormalizedOption {
   id: string;
   label: string;
   description?: string;
@@ -10,12 +18,31 @@ interface ChoiceListProps {
   props: {
     title?: string;
     multiple?: boolean;
-    options: Option[];
+    options?: OptionInput[];
   };
 }
 
+function normalizeOptions(raw: OptionInput[] | undefined): NormalizedOption[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((opt, idx) => {
+    const id = opt.id ?? opt.value ?? `opt-${idx}`;
+    const label = opt.label ?? id;
+    return { id, label, description: opt.description };
+  });
+}
+
 export function ChoiceList({ props }: ChoiceListProps) {
+  const options = normalizeOptions(props.options);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  if (options.length === 0) {
+    return (
+      <div style={wrapStyle}>
+        {props.title && <div style={titleStyle}>{props.title}</div>}
+        <div style={emptyStyle}>选项不完整</div>
+      </div>
+    );
+  }
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -34,7 +61,7 @@ export function ChoiceList({ props }: ChoiceListProps) {
     <div style={wrapStyle}>
       {props.title && <div style={titleStyle}>{props.title}</div>}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {props.options.map((opt) => {
+        {options.map((opt) => {
           const active = selected.has(opt.id);
           return (
             <button
@@ -82,4 +109,11 @@ const optionStyle: React.CSSProperties = {
   borderRadius: 6,
   cursor: "pointer",
   transition: "border-color 0.15s, background 0.15s",
+};
+
+const emptyStyle: React.CSSProperties = {
+  padding: "16px 0",
+  textAlign: "center",
+  color: "#98a2b3",
+  fontSize: 13,
 };

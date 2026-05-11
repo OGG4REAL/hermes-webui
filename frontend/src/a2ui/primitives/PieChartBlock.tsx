@@ -10,18 +10,46 @@ import {
 interface PieChartBlockProps {
   props: {
     title?: string;
-    labelKey: string;
-    valueKey: string;
-    data: Record<string, unknown>[];
+    labelKey?: string;
+    valueKey?: string;
+    data?: Record<string, unknown>[];
   };
 }
 
 const COLORS = ["#1570ef", "#067647", "#b54708", "#6941c6", "#b42318", "#344054"];
 
+// Per ADR-010: best-effort. If labelKey/valueKey not provided, infer first
+// non-numeric and first numeric field from data sample.
+function inferKeys(data: Record<string, unknown>[]): { labelKey: string | null; valueKey: string | null } {
+  if (data.length === 0) return { labelKey: null, valueKey: null };
+  const sample = data[0];
+  let labelKey: string | null = null;
+  let valueKey: string | null = null;
+  for (const k of Object.keys(sample)) {
+    if (typeof sample[k] === "number" && valueKey === null) valueKey = k;
+    else if (labelKey === null) labelKey = k;
+  }
+  return { labelKey, valueKey };
+}
+
 export function PieChartBlock({ props }: PieChartBlockProps) {
-  const chartData = props.data.map((row) => ({
-    name: String(row[props.labelKey] ?? ""),
-    value: Number(row[props.valueKey] ?? 0),
+  const data = Array.isArray(props.data) ? props.data : [];
+  const inferred = inferKeys(data);
+  const labelKey = props.labelKey ?? inferred.labelKey;
+  const valueKey = props.valueKey ?? inferred.valueKey;
+
+  if (data.length === 0 || !labelKey || !valueKey) {
+    return (
+      <div style={wrapStyle}>
+        {props.title && <div style={titleStyle}>{props.title}</div>}
+        <div style={emptyStyle}>饼图数据不完整</div>
+      </div>
+    );
+  }
+
+  const chartData = data.map((row) => ({
+    name: String(row[labelKey] ?? ""),
+    value: Number(row[valueKey] ?? 0),
   }));
 
   return (
@@ -61,4 +89,11 @@ const titleStyle: React.CSSProperties = {
   fontSize: 14,
   fontWeight: 600,
   marginBottom: 12,
+};
+
+const emptyStyle: React.CSSProperties = {
+  padding: "24px 0",
+  textAlign: "center",
+  color: "#98a2b3",
+  fontSize: 13,
 };

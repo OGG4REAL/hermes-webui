@@ -1,15 +1,19 @@
-# RM Workbench V0: Documentation Index
+# Structured UI Subsystem: Documentation Index
+
+> 历史名 "RM Workbench V0"。子系统已于 2026-05-09 重新定位为 Hermes WebUI 的
+> 结构化 UI 原子能力（Generative UI），RM Workbench 是它的第一个 consumer，不是
+> 它的所有者。详见 ADR-009 ~ ADR-013。文件名沿用历史名，进 deprecation 队列。
 
 路径：`docs/ui-ux/rm-workbench-v0-index.md`
-状态：`active / start here`
+状态：`active / start here (realigned 2026-05-09)`
 更新时间：`2026-05-09`
-目的：作为 RM Workbench V0 的唯一入口，避免后续工程 agent 被早期讨论文档绕进去。
+目的：作为本子系统的唯一入口，避免后续工程 agent 被早期讨论文档绕进去。
 
 ---
 
 ## 0. 文档体系结论
 
-RM Workbench V0 的文档以后按三层维护：
+本子系统的文档以后按三层维护：
 
 ```text
 Core docs
@@ -27,12 +31,28 @@ Reference docs
 
 后续新 issue 默认先读 core docs。涉及代码改动的 issue 必须读 Coding Boundary。只有 issue 明确需要时，才读对应 working/reference docs。
 
+**Layer 0 / Layer 1 锚点（2026-05-09 校准）**：
+
+```text
+Layer 0 — Generative UI 原子能力（工作台底座）
+  primitive catalog: MetricCard / DataTable / LineChart / BarChart / PieChart / ChoiceList
+  contract envelope: emit_ui tool（最小信封，kind 不做路由门禁）
+  interaction protocol: pending_interaction.resolve（结构化输入回传通道）
+
+Layer 1 — Business consumer（应以 Skill 形式存在，不以代码形式存在）
+  RM 是第一个 consumer；CFA / 投资 / 日常 AI 生成 UI 平级
+  business 端的 schema 严格性、字段约定、组合范式归 Skill 负责，不下沉到 Layer 0
+```
+
+任何 issue 在动手前先回答："我现在改的是 Layer 0 还是 Layer 1？" 改 Layer 0 的影响面是
+所有 consumer，要慎重；改 Layer 1 应优先考虑能不能用 Skill 表达，而不是写新代码。
+
 当前一句话架构：
 
 ```text
 Hermes Agent runtime
   -> hermes-webui backend
-  -> event: rm_workbench
+  -> event: rm_workbench  (命名包袱，机制是 Layer 0 通用通道)
   -> AG-UI CUSTOM carries A2UI messages
   -> React structured-UI host
   -> pending interaction resolve returns structured input
@@ -348,8 +368,8 @@ test: add RM workbench stream smoke coverage
 
 当前下一步：
 
-- **Issue 7.6: Generic A2UI Renderer Catalog**
-- **Issue 7.7: React Frontend Foundation for real WebUI path（建议新增）**
+- **Issue 7.6: Generic A2UI Renderer Catalog（已接受，closeout 已归档）**
+- **Issue 7.7: React Frontend Foundation for real WebUI path（下一步主线）**
 
 补充说明：
 
@@ -606,7 +626,7 @@ Expose rm_workbench_emit_contract to real Hermes Agent runs so the Issue 6 strea
 
 ### Issue 8: First Real RM Workflow
 
-状态：Issue 7.6 之后，尚未创建。
+状态：Issue 7.7 之后，尚未创建；只有当真实 WebUI chat 已能直接显示 Hermes 渲染的图表 / 表格 / 选择 UI 时才可开始。
 
 目标：
 
@@ -628,7 +648,7 @@ Implement one real RM workflow path driven by RM Skill.md + rm_workbench_emit_co
 
 ### Issue 7.6: Generic A2UI Renderer Catalog
 
-状态：下一步主线，尚未创建。
+状态：已完成实现并通过验收；closeout 结论是 generic renderer/catalog 能力成立于 React workbench host / mock path。
 
 目标：
 
@@ -780,15 +800,25 @@ RM_WORKBENCH_BACKEND=http://127.0.0.1:<port> npm run dev -- --host 127.0.0.1
 
 ## 9. 下一步建议
 
-主线顺序：
+主线顺序（2026-05-09 重排）：
 
 ```text
-Issue 7.5 -> done: runtime alignment + real WebUI smoke + readiness fixes
-Issue 7.6 -> next: generic A2UI renderer catalog
-Issue 7.7 -> React frontend foundation for real WebUI path
-Issue 8 -> first real RM workflow, only after 7.7
-Issue 9 -> memory proposal review path
-Issue 10+ -> productization / real data / multi-workflow
+Issue 7.5  -> done: runtime alignment + real WebUI smoke + readiness fixes
+Issue 7.6  -> done: generic A2UI renderer catalog
+Issue 7.7  -> in progress: React frontend foundation + Layer 0 校准
+              （ADR-007 修订验收：从主 chat 触发任意可达 contract，
+                能在主路径渲染至少 1 个 generic primitive 即满足）
+Issue 8    -> first real RM workflow（在 7.7 收口、Layer 0 ready 后启动；
+              RM 通过 Skill 教模型用 Layer 0 primitive 表达业务，
+              不要再加新 React surface 组件，见 ADR-013）
+Issue 9    -> Skill-driven Layer 1 migration（独立轨道，可与 Issue 8 并行准备）：
+              - ChoiceList 等 primitive 加 on_confirm interaction wiring
+              - 写出 RM Skill 资产，验证 RM workflow 能完全用 Layer 0 primitive 表达
+              - 删除 frontend/src/rm/surfaces/ 与对应后端 RM 分支
+              - 删除 contract.surfaces 字段和 map_surface_to_a2ui_messages 路径
+Issue 10   -> 命名整改 issue：rm_workbench 系命名（目录 / SSE event / DOM / CSS）
+              一次性去 RM 化，落实 ADR-012 deprecation 队列
+Issue 11+  -> productization / 真实数据 / 多 consumer 扩展
 ```
 
 完整阶段划分见：
@@ -807,6 +837,12 @@ Issue 10+ -> productization / real data / multi-workflow
 - 为了 UI 去改 Hermes 整体 runtime loop
 - 让模型生成任意 React code / JSX / HTML
 - 为每种 UI primitive 新增一个 Hermes tool
+- 为新业务 consumer（CFA / 投资 / 日常 UI）新建 `frontend/src/<domain>/surfaces/` 目录或后端分支
+  （这是 ADR-013 明确禁止的 Layer 1 硬编码错误；新 consumer 应该是 Skill 资产，不是代码）
+- 在 Layer 0 validator 里加 per-type 字段强校验（series.key 必须出现在 data row 等）
+  （这是 ADR-010 明确禁止的；缺字段由 primitive 在前端兜底）
+- 在 Layer 0 validator 里加 kind 白名单或路由门禁（违反 ADR-011）
+- 把任何新 RM 化命名引入到模型可见的 surface（tool 名 / schema 描述 / prompt 引用）
 
 ---
 
@@ -842,24 +878,49 @@ WebUI 真实 chat 中模型可见的工具列表
 
 ## 12. 推荐给下一张规划 / 实现 Issue 的开场指令
 
+> 2026-05-09 重写。原版本绑死了 `rm_workbench_emit_contract` 命名和 RM 化预设，
+> 是 MYM-38 反复推不动的诱因之一。新版本以 Layer 0 / Layer 1 分层为核心约束。
+
 可以把下面这段丢给新窗口：
 
 ```text
-请在 /Users/hywl/hermes-webui 中工作。先阅读：
+请在 /Users/hywl/hermes-webui 中工作。先阅读 core docs：
 
-- docs/ui-ux/rm-workbench-v0-index.md
+- docs/ui-ux/rm-workbench-v0-index.md       （入口 + Layer 0/Layer 1 锚点）
+- docs/ui-ux/rm-workbench-v0-adr.md         （决策主文件，特别是 ADR-009 ~ ADR-013）
+- docs/ui-ux/rm-workbench-v0-architecture.md
 - docs/ui-ux/rm-workbench-v0-roadmap.md
-- docs/ui-ux/rm-workbench-v0-generic-ui-catalog-plan.md
-- docs/ui-ux/rm-workbench-v0-issue7-foundation-status.md
-- docs/ui-ux/rm-workbench-v0-real-hermes-stream-evaluation-result.md
-- docs/ui-ux/Hermes双目录问题.md
-- docs/ui-ux/rm-workbench-v0-code-review-2026-05-07.md
+- docs/ui-ux/rm-workbench-v0-coding-boundary.md
 
-MYM-24 到 MYM-34 已经完成 V0 技术骨架、real stream bridge、Hermes Agent tool registration、runtime alignment 和 real WebUI smoke。MYM-35 进一步证明 generic renderer catalog 在 React workbench host / mock path 可通，但这还不等于主 WebUI chat 前端已经完成正式接管。现在先完成 Generic A2UI Renderer Catalog 的收口，再进入 React Frontend Foundation for real WebUI path，把 structured UI 的正式宿主问题单独解决，之后才进入第一条真实 RM workflow。
+只在 issue 明确需要时再读：
+- rm-workbench-v0-issue7-foundation-status.md
+- rm-workbench-v0-generic-ui-catalog-plan.md
+- rm-workbench-v0-real-hermes-stream-evaluation-result.md
 
-请围绕下一个 issue：
+子系统定位（不要重新讨论）：
+- "AI 在对话中生成结构化 UI" 是 Hermes WebUI 工作台的 Layer 0 原子能力。
+- RM Workbench 是这个能力的第一个 Layer 1 consumer，不是它的所有者。
+- Layer 0 包含：primitive catalog、emit_ui contract envelope、pending_interaction.resolve 通道。
+- Layer 1（RM 等业务）应以 Skill 资产形式存在，Skill 教模型用 Layer 0 primitive
+  组合出业务语义，不应该硬编码新的 React surface 或新的后端分支（见 ADR-013）。
 
-RM Workbench V0 React Frontend Foundation for real WebUI path
+硬约束（违反即不通过）:
+- 模型可见的结构化 UI emit tool 命名为 emit_ui（ADR-012），不要使用旧名
+  rm_workbench_emit_contract，也不要保留兼容别名。
+- Layer 0 validator 只校验最小可识别性（id/type/props 存在、type 在 catalog 内）；
+  per-type 字段缺失应在 primitive 内兜底，不抛 ValueError（ADR-010）。
+- Layer 0 contract 的 kind / version / run_id / thread_id / skill 全部可选，
+  缺省由后端补；kind 不再做路由门禁（ADR-011）。
+- 不要为新业务 consumer 新建 frontend/src/<domain>/surfaces/ 或后端 RM 化分支。
+- 不要引入 CopilotKit runtime takeover；不要改 /api/chat/stream top-level 协议；
+  不要为每种 primitive 新增独立 tool；不要让 memory 自动写入。
 
-请把当前已验证的 React RM workbench host 从独立 smoke app / mock path，推进成主 WebUI chat 路径中的正式 structured-UI 宿主。重点不是全站 React 重写，而是让主路径里有明确的 React mount point，可以消费真实 `event: rm_workbench`，并在日常对话中渲染 generic primitives 与 RM semantic surfaces，同时保持 `pending/resolve` 闭环。请继续复用 rm_workbench emit contract / bridge，不要引入 CopilotKit runtime，不要重写 `/api/chat/stream` top-level protocol，不要直接实现真实 pre-meeting brief workflow。验收必须包含一次从主 WebUI chat 真实触发到 UI 可见的 manual smoke，截图或 SSE log 入 issue comment。
+issue 验收要求:
+- L1 修复（仅文档 / 仅测试）：跑相关 pytest 和 frontend npm run build。
+- L2/L3 修改了 runtime / tool / streaming / frontend host：必须包含一次真实
+  WebUI manual smoke，证据贴在 issue comment（截图 / SSE log / browser console
+  log / server log 任一）。
+
+请围绕下一个 issue 给出 plan / implementation。如果你发现现有 ADR 与 issue 要做
+的事冲突，先停下并提议修订 ADR，而不是绕开它。
 ```

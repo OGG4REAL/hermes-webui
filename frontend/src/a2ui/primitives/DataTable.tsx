@@ -1,32 +1,52 @@
 interface Column {
   key: string;
-  label: string;
+  label?: string;
 }
 
 interface DataTableProps {
   props: {
     title?: string;
-    columns: Column[];
-    rows: Record<string, unknown>[];
+    columns?: Column[];
+    rows?: Record<string, unknown>[];
   };
 }
 
+// Per ADR-010: best-effort. If columns omitted, infer from first row keys.
+function inferColumns(rows: Record<string, unknown>[]): Column[] {
+  if (rows.length === 0) return [];
+  return Object.keys(rows[0]).map((k) => ({ key: k, label: k }));
+}
+
 export function DataTable({ props }: DataTableProps) {
+  const rows = Array.isArray(props.rows) ? props.rows : [];
+  const columns = Array.isArray(props.columns) && props.columns.length > 0
+    ? props.columns
+    : inferColumns(rows);
+
+  if (columns.length === 0 && rows.length === 0) {
+    return (
+      <div style={wrapStyle}>
+        {props.title && <div style={titleStyle}>{props.title}</div>}
+        <div style={emptyStyle}>表格数据不完整</div>
+      </div>
+    );
+  }
+
   return (
     <div style={wrapStyle}>
       {props.title && <div style={titleStyle}>{props.title}</div>}
       <table style={tableStyle}>
         <thead>
           <tr>
-            {props.columns.map((col) => (
-              <th key={col.key} style={thStyle}>{col.label}</th>
+            {columns.map((col) => (
+              <th key={col.key} style={thStyle}>{col.label ?? col.key}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {props.rows.map((row, i) => (
+          {rows.map((row, i) => (
             <tr key={i}>
-              {props.columns.map((col) => (
+              {columns.map((col) => (
                 <td key={col.key} style={tdStyle}>{String(row[col.key] ?? "")}</td>
               ))}
             </tr>
@@ -71,4 +91,11 @@ const tdStyle: React.CSSProperties = {
   padding: "8px 12px",
   borderBottom: "1px solid #f2f4f7",
   color: "#344054",
+};
+
+const emptyStyle: React.CSSProperties = {
+  padding: "24px 16px",
+  textAlign: "center",
+  color: "#98a2b3",
+  fontSize: 13,
 };
